@@ -1,0 +1,473 @@
+# ════════════════════════════════════════════════════════════════════════════
+# config.yaml — Centralized SQL Query Store
+# ════════════════════════════════════════════════════════════════════════════
+# ARCHITECTURAL MANDATE:
+#   All SQL queries are defined here and referenced by key in Python code.
+#   No raw SQL strings are permitted in the application's business logic.
+#   All queries use parameterized placeholders (%s) to categorically
+#   prevent SQL injection vulnerabilities.
+# ════════════════════════════════════════════════════════════════════════════
+
+# ────────────────── Application Settings ──────────────────
+app:
+  name: "Chop Kong Hin — Inventory Management System"
+  version: "2.0.0"
+  schema: "konghin"
+
+# ────────────────── Sequence Definitions ──────────────────
+sequences:
+  users: "usr_id_seq"
+  booking: "book_id_seq"
+  customer: "cust_id_seq"
+  stock: "stk_id_seq"
+  sale: "sale_id_seq"
+  salesman: "slm_id_seq"
+  purchase: "pur_id_seq"
+  book_payment: "bp_id_seq"
+  category_pattern_mapping: "cpat_id_seq"
+
+# Entity prefix for primary key generation (e.g., STK_100001)
+prefixes:
+  users: "USR"
+  booking: "BOOK"
+  customer: "CUST"
+  stock: "STK"
+  sale: "SALE"
+  salesman: "SLM"
+  purchase: "PUR"
+  book_payment: "BP"
+  category_pattern_mapping: "CPAT"
+
+# ────────────────── Authentication Queries ──────────────────
+auth:
+  verify_credentials: >
+    SELECT usr_id, usr_email, usr_password
+    FROM {schema}.users
+    WHERE usr_email = %s
+  
+  get_user_by_email: >
+    SELECT usr_id, usr_email
+    FROM {schema}.users
+    WHERE usr_email = %s
+
+  update_password_hash: >
+    UPDATE {schema}.users
+    SET usr_password = %s
+    WHERE usr_id = %s
+
+# ────────────────── Stock Queries ──────────────────
+stock:
+  fetch_all: >
+    SELECT * FROM {schema}.stock
+    ORDER BY stk_created_at DESC
+
+  fetch_by_id: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_id = %s
+
+  fetch_by_id_for_update: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_id = %s
+    FOR UPDATE
+
+  fetch_by_status: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_status = %s
+    ORDER BY stk_created_at DESC
+
+  count_by_status: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.stock
+    WHERE stk_status = %s
+
+  fetch_by_type_and_pattern: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_type = %s AND stk_pattern = %s
+    ORDER BY stk_created_at DESC
+
+  fetch_in_stock: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_status = 'IN STOCK'
+    ORDER BY stk_created_at DESC
+
+  fetch_in_stock_or_ids: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_status = 'IN STOCK' OR stk_id = ANY(%s)
+    ORDER BY stk_created_at DESC
+
+  fetch_by_sale_id: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_sale_id = %s
+
+  fetch_by_book_id: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_book_id = %s
+
+  fetch_stk_ids_by_sale: >
+    SELECT stk_id FROM {schema}.stock
+    WHERE stk_sale_id = %s
+
+  fetch_stk_ids_by_booking: >
+    SELECT stk_id FROM {schema}.stock
+    WHERE stk_book_id = %s
+
+  fetch_cost_for_profit: >
+    SELECT stk_weight * stk_gold_cost + stk_labor_cost AS total_cost
+    FROM {schema}.stock
+    WHERE stk_id = %s
+
+  insert: >
+    INSERT INTO {schema}.stock
+    ({columns})
+    VALUES ({placeholders})
+
+  update_by_id: >
+    UPDATE {schema}.stock
+    SET {set_clause}
+    WHERE stk_id = %s
+
+  update_status_sold: >
+    UPDATE {schema}.stock
+    SET stk_status = 'SOLD',
+        stk_sale_id = %s,
+        stk_weight_sell = %s,
+        stk_labor_sell = %s,
+        stk_gold_sell = %s,
+        stk_sell_date = %s,
+        stk_profit = %s,
+        stk_last_update = CURRENT_TIMESTAMP
+    WHERE stk_id = %s
+
+  update_status_booked: >
+    UPDATE {schema}.stock
+    SET stk_status = 'BOOKED',
+        stk_book_id = %s,
+        stk_weight_book = %s,
+        stk_labor_book = %s,
+        stk_gold_book = %s,
+        stk_book_price = %s,
+        stk_last_update = CURRENT_TIMESTAMP
+    WHERE stk_id = %s
+
+  reset_to_in_stock_from_sale: >
+    UPDATE {schema}.stock
+    SET stk_status = 'IN STOCK',
+        stk_sale_id = NULL,
+        stk_weight_sell = NULL,
+        stk_labor_sell = NULL,
+        stk_gold_sell = NULL,
+        stk_sell_date = NULL,
+        stk_profit = NULL,
+        stk_last_update = CURRENT_TIMESTAMP
+    WHERE stk_id = %s
+
+  reset_to_in_stock_from_booking: >
+    UPDATE {schema}.stock
+    SET stk_status = 'IN STOCK',
+        stk_book_id = NULL,
+        stk_weight_book = NULL,
+        stk_labor_book = NULL,
+        stk_gold_book = NULL,
+        stk_book_price = NULL,
+        stk_last_update = CURRENT_TIMESTAMP
+    WHERE stk_id = %s
+
+  delete_by_id: >
+    DELETE FROM {schema}.stock
+    WHERE stk_id = %s
+
+  fetch_barcode_export: >
+    SELECT
+        stk.stk_barcode,
+        stk.stk_weight,
+        stk.stk_gold_type,
+        stk.stk_length,
+        stk.stk_size,
+        stk.stk_returned,
+        p.pur_code,
+        stk.stk_id
+    FROM {schema}.stock stk
+    LEFT JOIN {schema}.purchase p ON stk.stk_pur_id = p.pur_id
+    WHERE stk.stk_id = ANY(%s)
+    ORDER BY stk.stk_id
+
+  update_printed: >
+    UPDATE {schema}.stock
+    SET stk_printed = '1',
+        stk_last_update = CURRENT_TIMESTAMP
+    WHERE stk_id = ANY(%s)
+
+  fetch_custom_table: >
+    SELECT
+        stk.*,
+        pur.*,
+        slm.*,
+        sale.*,
+        book.*,
+        sale_cust.cust_id AS sale_cust_id,
+        sale_cust.cust_name AS sale_cust_name,
+        sale_cust.cust_email_address AS sale_cust_email_address,
+        sale_cust.cust_phone_number AS sale_cust_phone_number,
+        sale_cust.cust_address AS sale_cust_address,
+        sale_cust.cust_buyer_id AS sale_cust_buyer_id,
+        sale_cust.cust_sst_reg_no AS sale_cust_sst_reg_no,
+        sale_cust.cust_tin AS sale_cust_tin,
+        book_cust.cust_id AS book_cust_id,
+        book_cust.cust_name AS book_cust_name,
+        book_cust.cust_email_address AS book_cust_email_address,
+        book_cust.cust_phone_number AS book_cust_phone_number,
+        book_cust.cust_address AS book_cust_address,
+        book_cust.cust_buyer_id AS book_cust_buyer_id,
+        book_cust.cust_sst_reg_no AS book_cust_sst_reg_no,
+        book_cust.cust_tin AS book_cust_tin,
+        COALESCE(sale_cust.cust_id, book_cust.cust_id) AS linked_cust_id,
+        COALESCE(sale_cust.cust_name, book_cust.cust_name) AS linked_cust_name,
+        COALESCE(sale_cust.cust_email_address, book_cust.cust_email_address) AS linked_cust_email_address,
+        COALESCE(sale_cust.cust_phone_number, book_cust.cust_phone_number) AS linked_cust_phone_number,
+        COALESCE(sale_cust.cust_address, book_cust.cust_address) AS linked_cust_address,
+        COALESCE(sale_cust.cust_buyer_id, book_cust.cust_buyer_id) AS linked_cust_buyer_id,
+        COALESCE(sale_cust.cust_sst_reg_no, book_cust.cust_sst_reg_no) AS linked_cust_sst_reg_no,
+        COALESCE(sale_cust.cust_tin, book_cust.cust_tin) AS linked_cust_tin
+    FROM {schema}.stock stk
+    LEFT JOIN {schema}.purchase pur ON stk.stk_pur_id = pur.pur_id
+    LEFT JOIN {schema}.salesman slm ON pur.pur_slm_id = slm.slm_id
+    LEFT JOIN {schema}.sale sale ON stk.stk_sale_id = sale.sale_id
+    LEFT JOIN {schema}.customer sale_cust ON sale.sale_cust_id = sale_cust.cust_id
+    LEFT JOIN {schema}.booking book ON stk.stk_book_id = book.book_id
+    LEFT JOIN {schema}.customer book_cust ON book.book_cust_id = book_cust.cust_id
+    ORDER BY stk.stk_created_at DESC
+
+  fetch_distinct_patterns_by_type: >
+    SELECT DISTINCT stk_pattern
+    FROM {schema}.stock
+    WHERE stk_type = %s AND stk_pattern IS NOT NULL
+    ORDER BY stk_pattern
+
+# ────────────────── Sale Queries ──────────────────
+sale:
+  fetch_all: >
+    SELECT * FROM {schema}.sale
+    ORDER BY sale_created_at DESC
+
+  fetch_by_id: >
+    SELECT * FROM {schema}.sale
+    WHERE sale_id = %s
+
+  insert: >
+    INSERT INTO {schema}.sale
+    (sale_id, sale_receipt_no, sale_cust_id, sale_sold_date,
+     sale_labor_sell, sale_gold_sell, sale_price, sale_weight,
+     sale_official_receipt)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+
+  update_by_id: >
+    UPDATE {schema}.sale
+    SET sale_receipt_no = %s,
+        sale_cust_id = %s,
+        sale_sold_date = %s,
+        sale_labor_sell = %s,
+        sale_gold_sell = %s,
+        sale_price = %s,
+        sale_weight = %s,
+        sale_official_receipt = %s,
+        sale_last_update = CURRENT_TIMESTAMP
+    WHERE sale_id = %s
+
+  delete_by_id: >
+    DELETE FROM {schema}.sale
+    WHERE sale_id = %s
+
+# ────────────────── Purchase Queries ──────────────────
+purchase:
+  fetch_all: >
+    SELECT * FROM {schema}.purchase
+    ORDER BY pur_created_at DESC
+
+  fetch_by_id: >
+    SELECT * FROM {schema}.purchase
+    WHERE pur_id = %s
+
+  fetch_by_code: >
+    SELECT pur_id, pur_date, pur_gold_cost, pur_gold_cost_999
+    FROM {schema}.purchase
+    WHERE pur_code = %s
+
+  fetch_latest: >
+    SELECT pur_id, pur_date
+    FROM {schema}.purchase
+    ORDER BY pur_created_at DESC
+    LIMIT 1
+
+  fetch_for_import: >
+    SELECT pur_id, pur_code, pur_gold_cost, pur_gold_cost_999, pur_date
+    FROM {schema}.purchase
+
+  insert: >
+    INSERT INTO {schema}.purchase
+    ({columns})
+    VALUES ({placeholders})
+
+  update_by_id: >
+    UPDATE {schema}.purchase
+    SET {set_clause}
+    WHERE pur_id = %s
+
+  delete_by_id: >
+    DELETE FROM {schema}.purchase
+    WHERE pur_id = %s
+
+# ────────────────── Booking Queries ──────────────────
+booking:
+  fetch_all: >
+    SELECT * FROM {schema}.booking
+    ORDER BY book_created_at DESC
+
+  fetch_by_id: >
+    SELECT * FROM {schema}.booking
+    WHERE book_id = %s
+
+  insert: >
+    INSERT INTO {schema}.booking
+    (book_id, book_cust_id, book_receipt_no, book_date,
+     book_gold_price, book_labor_price, book_weight, book_price,
+     book_remaining, book_status)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+
+  update_by_id: >
+    UPDATE {schema}.booking
+    SET book_gold_price = %s,
+        book_labor_price = %s,
+        book_weight = %s,
+        book_price = %s,
+        book_cust_id = %s,
+        book_receipt_no = %s,
+        book_remaining = %s,
+        book_last_update = CURRENT_TIMESTAMP
+    WHERE book_id = %s
+
+  delete_by_id: >
+    DELETE FROM {schema}.booking
+    WHERE book_id = %s
+
+  update_remaining: >
+    UPDATE {schema}.booking
+    SET book_remaining = %s,
+        book_last_update = CURRENT_TIMESTAMP
+    WHERE book_id = %s
+
+# ────────────────── Book Payment Queries ──────────────────
+book_payment:
+  fetch_by_booking: >
+    SELECT * FROM {schema}.book_payment
+    WHERE bp_book_id = %s
+    ORDER BY bp_created_at DESC
+
+  delete_by_booking: >
+    DELETE FROM {schema}.book_payment
+    WHERE bp_book_id = %s
+
+  sum_payments: >
+    SELECT COALESCE(SUM(bp_payment), 0) AS total_paid
+    FROM {schema}.book_payment
+    WHERE bp_book_id = %s
+
+  insert: >
+    INSERT INTO {schema}.book_payment
+    (bp_id, bp_payment, bp_payment_date, bp_book_id, bp_status)
+    VALUES (%s, %s, %s, %s, %s)
+
+# ────────────────── Customer Queries ──────────────────
+customer:
+  fetch_all: >
+    SELECT * FROM {schema}.customer
+    ORDER BY cust_created_at DESC
+
+  count_all: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.customer
+
+  fetch_by_id: >
+    SELECT * FROM {schema}.customer
+    WHERE cust_id = %s
+
+  insert: >
+    INSERT INTO {schema}.customer
+    ({columns})
+    VALUES ({placeholders})
+
+  update_by_id: >
+    UPDATE {schema}.customer
+    SET {set_clause}
+    WHERE cust_id = %s
+
+  delete_by_id: >
+    DELETE FROM {schema}.customer
+    WHERE cust_id = %s
+
+# ────────────────── Salesman Queries ──────────────────
+salesman:
+  fetch_all: >
+    SELECT * FROM {schema}.salesman
+    ORDER BY slm_created_at DESC
+
+  fetch_by_id: >
+    SELECT * FROM {schema}.salesman
+    WHERE slm_id = %s
+
+  insert: >
+    INSERT INTO {schema}.salesman
+    ({columns})
+    VALUES ({placeholders})
+
+  update_by_id: >
+    UPDATE {schema}.salesman
+    SET {set_clause}
+    WHERE slm_id = %s
+
+  delete_by_id: >
+    DELETE FROM {schema}.salesman
+    WHERE slm_id = %s
+
+# ────────────────── Category Pattern Mapping Queries ──────────────────
+category_pattern_mapping:
+  fetch_all: >
+    SELECT * FROM {schema}.category_pattern_mapping
+    ORDER BY cpat_created_at DESC
+
+  fetch_by_id: >
+    SELECT * FROM {schema}.category_pattern_mapping
+    WHERE cpat_id = %s
+
+  fetch_by_category: >
+    SELECT * FROM {schema}.category_pattern_mapping
+    WHERE UPPER(cpat_category) = UPPER(%s)
+    ORDER BY cpat_pattern
+
+  fetch_distinct_categories: >
+    SELECT DISTINCT cpat_category FROM {schema}.category_pattern_mapping
+    ORDER BY cpat_category
+
+  fetch_distinct_patterns_by_category: >
+    SELECT DISTINCT cpat_pattern, cpat_image_path
+    FROM {schema}.category_pattern_mapping
+    WHERE UPPER(cpat_category) = UPPER(%s)
+    ORDER BY cpat_pattern
+
+  insert: >
+    INSERT INTO {schema}.category_pattern_mapping
+    ({columns})
+    VALUES ({placeholders})
+
+  update_by_id: >
+    UPDATE {schema}.category_pattern_mapping
+    SET {set_clause}
+    WHERE cpat_id = %s
+
+  delete_by_id: >
+    DELETE FROM {schema}.category_pattern_mapping
+    WHERE cpat_id = %s
+
+# ────────────────── Sequence Operations ──────────────────
+sequence:
+  nextval: "SELECT nextval('{schema}.{seq_name}')"
+  currval: "SELECT currval('{schema}.{seq_name}')"

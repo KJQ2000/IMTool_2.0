@@ -1,0 +1,27 @@
+# ──────────────────────────────────────────────────────────
+# IMTool Improved — Enterprise Dependencies
+# ──────────────────────────────────────────────────────────
+
+# Web Framework
+streamlit>=1.32.0
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Data Processing
+pandas>=2.2.0
+numpy
+openpyxl
+
+# Security
+bcrypt
+
+# Configuration
+pyyaml
+
+# AI / RAG
+openai>=1.14.0
+scikit-learn
+
+# Environment
+python-dotenv

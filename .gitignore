@@ -1,0 +1,47 @@
+# ──────────────────────────────────────────────────────────
+# IMTool Improved — Enterprise Application .gitignore
+# ──────────────────────────────────────────────────────────
+
+# Streamlit secrets (CRITICAL — contains DB + API credentials)
+.streamlit/secrets.toml
+.streamlit/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Environment
+.env
+.env.*
+.venv/
+venv/
+env/
+
+# Logs
+logs/
+*.log
+system_files/Log/
+
+# Import staging area
+staging/
+system_files/Import/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+
+# OS
+Thumbs.db
+.DS_Store
