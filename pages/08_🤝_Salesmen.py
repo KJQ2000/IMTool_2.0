@@ -8,6 +8,13 @@ from auth_controller import require_auth
 from database_manager import DatabaseManager
 from logging_config import get_logger
 
+from utils.editable_table import (
+    render_filterable_editor,
+    render_pagination_controls,
+    save_table_changes,
+)
+from utils.query_cache import clear_query_caches, fetch_rows_cached, fetch_scalar_cached
+
 logger = get_logger(__name__)
 require_auth()
 st.markdown("## 🤝 Salesman Management")
@@ -17,9 +24,51 @@ tab_view, tab_add, tab_edit = st.tabs(["📋 View", "➕ Add", "✏️ Edit"])
 
 with tab_view:
     try:
-        salesmen = db.fetch_all("salesman.fetch_all")
+        search_term = st.text_input(
+            "Search Salesmen",
+            key="slm_view_search",
+            placeholder="Salesman ID / name / company / phone / email",
+        ).strip()
+        search_like = f"%{search_term}%"
+        total_rows = int(
+            fetch_scalar_cached(
+                "salesman.count_filtered",
+                (search_term, search_like, search_like, search_like, search_like, search_like),
+            ) or 0
+        )
+        page_size, _, offset = render_pagination_controls(
+            table_key="slm_view",
+            total_rows=total_rows,
+        )
+        salesmen = fetch_rows_cached(
+            "salesman.fetch_page",
+            (
+                search_term,
+                search_like,
+                search_like,
+                search_like,
+                search_like,
+                search_like,
+                page_size,
+                offset,
+            ),
+        )
         if salesmen:
-            st.dataframe(pd.DataFrame(salesmen), use_container_width=True, height=500)
+            df_slm = pd.DataFrame(salesmen)
+            original_df, edited_df = render_filterable_editor(
+                df_slm, "slm_view", "slm_id",
+                disabled_columns=["slm_id", "slm_created_at", "slm_last_update"],
+            )
+            if st.button("💾 Save Changes", key="btn_save_slm_table"):
+                try:
+                    count = save_table_changes(original_df, edited_df, "salesman", "slm_id")
+                    if count > 0:
+                        st.success(f"✅ Saved {count} row(s).")
+                        st.rerun()
+                    else:
+                        st.info("No changes detected.")
+                except Exception as e:
+                    st.error(f"Save failed: {e}")
         else:
             st.info("No salesmen found.")
     except Exception as e:
@@ -31,6 +80,7 @@ with tab_view:
         try:
             with db.transaction() as cur:
                 db.build_delete("salesman", del_id, cur)
+            clear_query_caches()
             st.success(f"Deleted {del_id}")
             st.rerun()
         except Exception as e:
@@ -68,6 +118,7 @@ with tab_add:
                         vals.append(cv.strip())
                 with db.transaction() as cur:
                     pk = db.build_insert("salesman", cols, vals, cur)
+                clear_query_caches()
                 st.success(f"✅ Salesman {pk} added!")
             except Exception as e:
                 st.error(f"Failed: {e}")
@@ -108,7 +159,15 @@ with tab_edit:
                         vals = [e_name, e_company, e_email, e_phone, e_addr,
                                 e_desc, e_supplier, e_tin, e_reg, e_msic]
                         with db.transaction() as cur:
-                            db.build_update("salesman", cols, vals, s["slm_id"], cur)
+                            db.build_update(
+                                "salesman",
+                                cols,
+                                vals,
+                                s["slm_id"],
+                                cur,
+                                expected_last_update=s.get("slm_last_update"),
+                            )
+                        clear_query_caches()
                         st.success(f"✅ Updated {s['slm_id']}")
                         del st.session_state["editing_slm"]
                         st.rerun()

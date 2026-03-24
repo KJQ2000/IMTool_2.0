@@ -9,6 +9,13 @@ from auth_controller import require_auth
 from database_manager import DatabaseManager
 from logging_config import get_logger
 
+from utils.editable_table import (
+    render_filterable_editor,
+    render_pagination_controls,
+    save_table_changes,
+)
+from utils.query_cache import clear_query_caches, fetch_rows_cached, fetch_scalar_cached
+
 logger = get_logger(__name__)
 require_auth()
 st.markdown("## 📋 Purchase Management")
@@ -18,10 +25,42 @@ tab_view, tab_add, tab_edit = st.tabs(["📋 View Purchases", "➕ Add Purchase"
 
 with tab_view:
     try:
-        purchases = db.fetch_all("purchase.fetch_all")
+        search_term = st.text_input(
+            "Search Purchases",
+            key="pur_view_search",
+            placeholder="Purchase ID / code / invoice / status",
+        ).strip()
+        search_like = f"%{search_term}%"
+        total_rows = int(
+            fetch_scalar_cached(
+                "purchase.count_filtered",
+                (search_term, search_like, search_like, search_like, search_like),
+            ) or 0
+        )
+        page_size, _, offset = render_pagination_controls(
+            table_key="pur_view",
+            total_rows=total_rows,
+        )
+        purchases = fetch_rows_cached(
+            "purchase.fetch_page",
+            (search_term, search_like, search_like, search_like, search_like, page_size, offset),
+        )
         if purchases:
-            st.dataframe(pd.DataFrame(purchases), use_container_width=True, height=500)
-            st.caption(f"Showing {len(purchases)} purchase(s)")
+            df_pur = pd.DataFrame(purchases)
+            original_df, edited_df = render_filterable_editor(
+                df_pur, "pur_view", "pur_id",
+                disabled_columns=["pur_id", "pur_created_at", "pur_last_update"],
+            )
+            if st.button("💾 Save Changes", key="btn_save_pur_table"):
+                try:
+                    count = save_table_changes(original_df, edited_df, "purchase", "pur_id")
+                    if count > 0:
+                        st.success(f"✅ Saved {count} row(s).")
+                        st.rerun()
+                    else:
+                        st.info("No changes detected.")
+                except Exception as e:
+                    st.error(f"Save failed: {e}")
         else:
             st.info("No purchase records found.")
     except Exception as e:
@@ -33,6 +72,7 @@ with tab_view:
         try:
             with db.transaction() as cur:
                 db.build_delete("purchase", del_id, cur)
+            clear_query_caches()
             st.success(f"Purchase {del_id} deleted.")
             st.rerun()
         except Exception as e:
@@ -40,7 +80,7 @@ with tab_view:
 
 with tab_add:
     st.markdown("#### Add New Purchase")
-    salesmen = db.fetch_all("salesman.fetch_all")
+    salesmen = fetch_rows_cached("salesman.fetch_all")
     slm_map = {f"{s.get('slm_name', '?')} ({s['slm_id']})": s["slm_id"] for s in salesmen}
 
     with st.form("add_pur", clear_on_submit=True):
@@ -81,6 +121,7 @@ with tab_add:
                     vals.append(pur_gc999)
                 with db.transaction() as cur:
                     pk = db.build_insert("purchase", cols, vals, cur)
+                clear_query_caches()
                 st.success(f"✅ Purchase {pk} added!")
             except Exception as e:
                 st.error(f"Failed: {e}")
@@ -121,7 +162,15 @@ with tab_edit:
                                 "pur_invoice_no", "pur_total_amt", "pur_payment_status"]
                         vals = [e_code.upper(), e_gc, e_labor, e_weight, e_invoice, e_total, e_status]
                         with db.transaction() as cur:
-                            db.build_update("purchase", cols, vals, p["pur_id"], cur)
+                            db.build_update(
+                                "purchase",
+                                cols,
+                                vals,
+                                p["pur_id"],
+                                cur,
+                                expected_last_update=p.get("pur_last_update"),
+                            )
+                        clear_query_caches()
                         st.success(f"✅ Purchase {p['pur_id']} updated.")
                         del st.session_state["editing_pur"]
                         st.rerun()

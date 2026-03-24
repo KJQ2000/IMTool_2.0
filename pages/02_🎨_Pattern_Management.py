@@ -235,7 +235,14 @@ with tab_edit:
                     values = [e_category, e_pattern.strip().upper(), new_image_path]
 
                     with db.transaction() as cur:
-                        db.build_update("category_pattern_mapping", columns, values, m["cpat_id"], cur)
+                        db.build_update(
+                            "category_pattern_mapping",
+                            columns,
+                            values,
+                            m["cpat_id"],
+                            cur,
+                            expected_last_update=m.get("cpat_last_update"),
+                        )
 
                     st.success(f"✅ Mapping {m['cpat_id']} updated.")
                     del st.session_state["editing_cpat"]

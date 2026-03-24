@@ -3,12 +3,13 @@
 ## Current Layout
 
 - `app.py`: app shell, login gate, sidebar, and top-level metrics.
+- `config/`: query and prompt registries.
 - `pages/`: operational Streamlit pages.
 - `agents/`: AI agent pipeline stages.
 - `utils/`: reusable helpers.
-- `config.yaml`: database query registry.
-- `prompts.yaml`: agent prompt registry.
 - `knowledge/`: RAG source documents.
+- `docs/`: audits, reviews, and maintenance guides.
+- `scripts/verification/`: manual verification helpers.
 - `system_files/pattern_images/`: managed image assets.
 - `logs/`, `staging/`, `__pycache__/`: runtime/generated output.
 
@@ -24,7 +25,7 @@
 - Source and runtime artifacts live side by side.
 - Many pages contain both UI logic and transactional business rules.
 - Some pages still bypass the shared query layer or build SQL inline.
-- There is no top-level `docs/` or `tests/` area.
+- Automated tests are still missing even though the top-level `docs/` and `tests/` areas now exist.
 
 ## Recommended Target Structure
 
@@ -32,7 +33,7 @@
 IMTool Improved/
   app.py
   config/
-    queries.yaml
+    config.yaml
     prompts.yaml
   pages/
   services/
@@ -45,11 +46,9 @@ IMTool Improved/
   system_files/
     pattern_images/
   docs/
-    REPO_AUDIT.md
-    SECURITY_REVIEW.md
-    PERFORMANCE_REVIEW.md
-    STRUCTURE_GUIDE.md
-    DELETE_CANDIDATES.md
+    audit/
+    reviews/
+    guides/
   tests/
 ```
 
@@ -62,7 +61,7 @@ IMTool Improved/
 
 ## Low-Risk Next Steps
 
-- Move `config.yaml` and `prompts.yaml` into a `config/` folder once import paths are updated.
+- Keep `config/` as the single home for query and prompt registries.
 - Introduce a `services/` layer for booking, sale, and stock workflows.
-- Move audit Markdown into `docs/` after the team confirms the preferred docs layout.
+- Keep audits, reviews, and maintenance notes under `docs/`.
 - Keep runtime folders like `logs/` and `staging/` outside the source tree when possible.

@@ -3,7 +3,7 @@ prompt_config.py
 ----------------
 Centralized prompt registry for all AI agents.
 
-Prompts are stored in ``prompts.yaml`` and loaded once per process.
+Prompts are stored in ``config/prompts.yaml`` and loaded once per process.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-_PROMPTS_PATH = Path(__file__).resolve().parent / "prompts.yaml"
+_PROMPTS_PATH = Path(__file__).resolve().parent / "config" / "prompts.yaml"
 _TOKEN_PATTERN = re.compile(r"\{\{([A-Z0-9_]+)\}\}")
 
 

@@ -18,6 +18,13 @@ from config_loader import get_query
 from database_manager import DatabaseManager
 from logging_config import get_logger
 
+from utils.editable_table import (
+    render_filterable_editor,
+    render_pagination_controls,
+    save_table_changes,
+)
+from utils.query_cache import clear_query_caches, fetch_rows_cached, fetch_scalar_cached
+
 logger = get_logger(__name__)
 require_auth()
 st.markdown("## 📦 Stock Management")
@@ -39,17 +46,10 @@ with tab_view:
         st.session_state["tf"] = dash_type
 
     try:
-        all_stocks = db.fetch_all("stock.fetch_all")
-        all_patterns = sorted({s.get("stk_pattern") for s in all_stocks if s.get("stk_pattern")})
-        
-        if dash_ptn and dash_ptn not in all_patterns:
-            all_patterns.append(dash_ptn)
-            all_patterns = sorted(all_patterns)
-            
         if dash_ptn:
             st.session_state["pf"] = dash_ptn
 
-        col_f1, col_f2, col_f3 = st.columns(3)
+        col_f1, col_f2, col_f3, col_f4 = st.columns(4)
         with col_f1:
             status_filter = st.selectbox(
                 "Filter by Status",
@@ -63,21 +63,70 @@ with tab_view:
                 key="tf",
             )
         with col_f3:
+            pattern_rows = (
+                fetch_rows_cached("stock.fetch_distinct_patterns_by_type", (type_filter,))
+                if type_filter != "ALL"
+                else fetch_rows_cached("stock.fetch_distinct_patterns")
+            )
+            all_patterns = sorted(
+                {
+                    row.get("stk_pattern")
+                    for row in pattern_rows
+                    if row.get("stk_pattern")
+                }
+            )
+            if dash_ptn and dash_ptn not in all_patterns:
+                all_patterns.append(dash_ptn)
+                all_patterns = sorted(all_patterns)
             pattern_filter = st.selectbox(
                 "Filter by Pattern",
                 ["ALL"] + all_patterns,
-                key="pf"
+                key="pf",
             )
+        with col_f4:
+            search_term = st.text_input(
+                "Search",
+                key="stk_view_search",
+                placeholder="ID / pattern / tag / remark",
+            ).strip()
 
-        stocks = [s for s in all_stocks if (status_filter == "ALL" or s.get("stk_status") == status_filter)]
-        if type_filter != "ALL":
-            stocks = [s for s in stocks if s.get("stk_type") == type_filter]
-        if pattern_filter != "ALL":
-            stocks = [s for s in stocks if s.get("stk_pattern") == pattern_filter]
+        search_like = f"%{search_term}%"
+        filter_params = (
+            status_filter,
+            status_filter,
+            type_filter,
+            type_filter,
+            pattern_filter,
+            pattern_filter,
+            search_term,
+            search_like,
+            search_like,
+            search_like,
+            search_like,
+        )
+        total_rows = int(fetch_scalar_cached("stock.count_filtered", filter_params) or 0)
+        page_size, _, offset = render_pagination_controls(
+            table_key="stk_view",
+            total_rows=total_rows,
+        )
+        stocks = fetch_rows_cached("stock.fetch_page", filter_params + (page_size, offset))
 
         if stocks:
-            st.dataframe(pd.DataFrame(stocks), use_container_width=True, height=500)
-            st.caption(f"Showing {len(stocks)} record(s)")
+            df_stocks = pd.DataFrame(stocks)
+            original_df, edited_df = render_filterable_editor(
+                df_stocks, "stk_view", "stk_id",
+                disabled_columns=["stk_id", "stk_created_at", "stk_last_update"],
+            )
+            if st.button("💾 Save Changes", key="btn_save_stk_table"):
+                try:
+                    count = save_table_changes(original_df, edited_df, "stock", "stk_id")
+                    if count > 0:
+                        st.success(f"✅ Saved {count} row(s).")
+                        st.rerun()
+                    else:
+                        st.info("No changes detected.")
+                except Exception as e:
+                    st.error(f"Save failed: {e}")
         else:
             st.info("No stock records found.")
     except Exception as e:
@@ -91,6 +140,7 @@ with tab_view:
         try:
             with db.transaction() as cur:
                 db.build_delete("stock", del_id, cur)
+            clear_query_caches()
             st.success(f"Stock {del_id} deleted.")
             st.rerun()
         except Exception as e:
@@ -101,7 +151,7 @@ with tab_view:
 # ═══════════════════════════════════════════════════════════
 with tab_add:
     st.markdown("#### Add New Stock Item")
-    purchases = db.fetch_all("purchase.fetch_all")
+    purchases = fetch_rows_cached("purchase.fetch_all")
 
     with st.form("add_stk", clear_on_submit=True):
         c1, c2 = st.columns(2)
@@ -173,6 +223,7 @@ with tab_add:
                     all_vals = [pk, barcode] + vals
                     db.insert_row("stock", all_cols, all_vals, cur)
 
+                clear_query_caches()
                 st.success(f"✅ {pk} added! Barcode: `{barcode}`")
                 logger.info("Added stock %s barcode %s", pk, barcode)
             except Exception as e:
@@ -247,7 +298,18 @@ with tab_edit:
                                 "stock.fetch_by_id_for_update", schema=db.schema,
                             )
                             cur.execute(lock_sql, (s["stk_id"],))
-                            db.build_update("stock", cols, vals, s["stk_id"], cur)
+                            locked_row = cur.fetchone()
+                            if not locked_row:
+                                raise ValueError(f"Stock {s['stk_id']} no longer exists.")
+                            db.build_update(
+                                "stock",
+                                cols,
+                                vals,
+                                s["stk_id"],
+                                cur,
+                                expected_last_update=s.get("stk_last_update"),
+                            )
+                        clear_query_caches()
                         st.success(f"✅ {s['stk_id']} updated.")
                         del st.session_state["editing_stk"]
                         st.rerun()
@@ -295,26 +357,25 @@ with tab_export:
 
     # ── Fetch & filter ──
     try:
-        if exp_status != "ALL":
-            exp_stocks = db.fetch_all("stock.fetch_by_status", (exp_status,))
-        else:
-            exp_stocks = db.fetch_all("stock.fetch_all")
-
-        if exp_type != "ALL":
-            exp_stocks = [s for s in exp_stocks if s.get("stk_type") == exp_type]
-
-        if exp_date:
-            exp_stocks = [
-                s for s in exp_stocks
-                if s.get("stk_created_at") is not None
-                and str(s["stk_created_at"])[:10] >= exp_date.isoformat()
-            ]
-
-        if exp_printed == "Not printed only":
-            exp_stocks = [s for s in exp_stocks if not s.get("stk_printed")]
-        elif exp_printed == "Printed only":
-            exp_stocks = [s for s in exp_stocks if s.get("stk_printed")]
-
+        printed_filter = {
+            "ALL": "ALL",
+            "Not printed only": "NOT_PRINTED",
+            "Printed only": "PRINTED",
+        }[exp_printed]
+        exp_stocks = fetch_rows_cached(
+            "stock.fetch_barcode_export_filtered",
+            (
+                exp_status,
+                exp_status,
+                exp_type,
+                exp_type,
+                exp_date.isoformat() if exp_date else None,
+                exp_date.isoformat() if exp_date else None,
+                printed_filter,
+                printed_filter,
+                printed_filter,
+            ),
+        )
     except Exception as e:
         exp_stocks = []
         st.error(f"Failed to load stocks: {e}")
@@ -385,6 +446,7 @@ with tab_export:
                         with db.transaction() as cur:
                             printed_sql = get_query("stock.update_printed", schema=db.schema)
                             cur.execute(printed_sql, (stk_ids,))
+                        clear_query_caches()
                         logger.info("Marked %d stock(s) as printed", len(stk_ids))
                     except Exception as e:
                         logger.warning("Failed to mark printed: %s", e)

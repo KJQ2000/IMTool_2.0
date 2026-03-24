@@ -1,47 +1,59 @@
-# ──────────────────────────────────────────────────────────
-# IMTool Improved — Enterprise Application .gitignore
-# ──────────────────────────────────────────────────────────
+# IMTool Improved .gitignore
 
-# Streamlit secrets (CRITICAL — contains DB + API credentials)
-.streamlit/secrets.toml
-.streamlit/
+# Sensitive local configuration
+/.streamlit/secrets.toml
+/.streamlit/*.local.toml
 
-# Python
+# Python bytecode and build output
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 *.egg-info/
-dist/
-build/
 .eggs/
+build/
+dist/
+pip-wheel-metadata/
 
-# Environment
+# Virtual environments and local env files
 .env
 .env.*
 .venv/
 venv/
 env/
+ENV/
 
-# Logs
-logs/
+# Test, coverage, and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Runtime output
+/logs/
+/staging/
+/system_files/Import/
+/system_files/Log/
 *.log
-system_files/Log/
 
-# Import staging area
-staging/
-system_files/Import/
-
-# IDE
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# Tool caches
-.pytest_cache/
-.mypy_cache/
-
-# OS
+# OS files
 Thumbs.db
 .DS_Store
+
+# Local scratch files
+*.tmp
+*.temp
+*.bak
+*.orig

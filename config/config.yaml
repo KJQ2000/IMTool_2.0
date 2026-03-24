@@ -61,6 +61,31 @@ stock:
     SELECT * FROM {schema}.stock
     ORDER BY stk_created_at DESC
 
+  fetch_page: >
+    SELECT * FROM {schema}.stock
+    WHERE (%s = 'ALL' OR stk_status = %s)
+      AND (%s = 'ALL' OR stk_type = %s)
+      AND (%s = 'ALL' OR COALESCE(stk_pattern, '') = %s)
+      AND (%s = '' OR
+           stk_id ILIKE %s OR
+           COALESCE(stk_pattern, '') ILIKE %s OR
+           COALESCE(stk_tag, '') ILIKE %s OR
+           COALESCE(stk_remark, '') ILIKE %s)
+    ORDER BY stk_created_at DESC
+    LIMIT %s OFFSET %s
+
+  count_filtered: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.stock
+    WHERE (%s = 'ALL' OR stk_status = %s)
+      AND (%s = 'ALL' OR stk_type = %s)
+      AND (%s = 'ALL' OR COALESCE(stk_pattern, '') = %s)
+      AND (%s = '' OR
+           stk_id ILIKE %s OR
+           COALESCE(stk_pattern, '') ILIKE %s OR
+           COALESCE(stk_tag, '') ILIKE %s OR
+           COALESCE(stk_remark, '') ILIKE %s)
+
   fetch_by_id: >
     SELECT * FROM {schema}.stock
     WHERE stk_id = %s
@@ -102,6 +127,11 @@ stock:
   fetch_by_book_id: >
     SELECT * FROM {schema}.stock
     WHERE stk_book_id = %s
+
+  fetch_by_book_id_for_update: >
+    SELECT * FROM {schema}.stock
+    WHERE stk_book_id = %s
+    FOR UPDATE
 
   fetch_stk_ids_by_sale: >
     SELECT stk_id FROM {schema}.stock
@@ -191,6 +221,18 @@ stock:
     WHERE stk.stk_id = ANY(%s)
     ORDER BY stk.stk_id
 
+  fetch_barcode_export_filtered: >
+    SELECT * FROM {schema}.stock
+    WHERE (%s = 'ALL' OR stk_status = %s)
+      AND (%s = 'ALL' OR stk_type = %s)
+      AND (%s IS NULL OR DATE(stk_created_at) >= %s)
+      AND (
+        %s = 'ALL' OR
+        (%s = 'NOT_PRINTED' AND COALESCE(NULLIF(TRIM(CAST(stk_printed AS TEXT)), ''), '0') IN ('0', 'FALSE', 'false')) OR
+        (%s = 'PRINTED' AND COALESCE(NULLIF(TRIM(CAST(stk_printed AS TEXT)), ''), '0') NOT IN ('0', 'FALSE', 'false'))
+      )
+    ORDER BY stk_created_at DESC
+
   update_printed: >
     UPDATE {schema}.stock
     SET stk_printed = '1',
@@ -243,11 +285,34 @@ stock:
     WHERE stk_type = %s AND stk_pattern IS NOT NULL
     ORDER BY stk_pattern
 
+  fetch_distinct_patterns: >
+    SELECT DISTINCT stk_pattern
+    FROM {schema}.stock
+    WHERE stk_pattern IS NOT NULL
+    ORDER BY stk_pattern
+
 # ────────────────── Sale Queries ──────────────────
 sale:
   fetch_all: >
     SELECT * FROM {schema}.sale
     ORDER BY sale_created_at DESC
+
+  fetch_page: >
+    SELECT * FROM {schema}.sale
+    WHERE (%s = '' OR
+           sale_id ILIKE %s OR
+           COALESCE(sale_receipt_no, '') ILIKE %s OR
+           COALESCE(sale_cust_id, '') ILIKE %s)
+    ORDER BY sale_created_at DESC
+    LIMIT %s OFFSET %s
+
+  count_filtered: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.sale
+    WHERE (%s = '' OR
+           sale_id ILIKE %s OR
+           COALESCE(sale_receipt_no, '') ILIKE %s OR
+           COALESCE(sale_cust_id, '') ILIKE %s)
 
   fetch_by_id: >
     SELECT * FROM {schema}.sale
@@ -282,6 +347,25 @@ purchase:
   fetch_all: >
     SELECT * FROM {schema}.purchase
     ORDER BY pur_created_at DESC
+
+  fetch_page: >
+    SELECT * FROM {schema}.purchase
+    WHERE (%s = '' OR
+           pur_id ILIKE %s OR
+           COALESCE(pur_code, '') ILIKE %s OR
+           COALESCE(pur_invoice_no, '') ILIKE %s OR
+           COALESCE(pur_payment_status, '') ILIKE %s)
+    ORDER BY pur_created_at DESC
+    LIMIT %s OFFSET %s
+
+  count_filtered: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.purchase
+    WHERE (%s = '' OR
+           pur_id ILIKE %s OR
+           COALESCE(pur_code, '') ILIKE %s OR
+           COALESCE(pur_invoice_no, '') ILIKE %s OR
+           COALESCE(pur_payment_status, '') ILIKE %s)
 
   fetch_by_id: >
     SELECT * FROM {schema}.purchase
@@ -322,9 +406,33 @@ booking:
     SELECT * FROM {schema}.booking
     ORDER BY book_created_at DESC
 
+  fetch_page: >
+    SELECT * FROM {schema}.booking
+    WHERE (%s = '' OR
+           book_id ILIKE %s OR
+           COALESCE(book_receipt_no, '') ILIKE %s OR
+           COALESCE(book_cust_id, '') ILIKE %s OR
+           COALESCE(book_status, '') ILIKE %s)
+    ORDER BY book_created_at DESC
+    LIMIT %s OFFSET %s
+
+  count_filtered: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.booking
+    WHERE (%s = '' OR
+           book_id ILIKE %s OR
+           COALESCE(book_receipt_no, '') ILIKE %s OR
+           COALESCE(book_cust_id, '') ILIKE %s OR
+           COALESCE(book_status, '') ILIKE %s)
+
   fetch_by_id: >
     SELECT * FROM {schema}.booking
     WHERE book_id = %s
+
+  fetch_by_id_for_update: >
+    SELECT * FROM {schema}.booking
+    WHERE book_id = %s
+    FOR UPDATE
 
   insert: >
     INSERT INTO {schema}.booking
@@ -355,6 +463,13 @@ booking:
         book_last_update = CURRENT_TIMESTAMP
     WHERE book_id = %s
 
+  update_status_completed: >
+    UPDATE {schema}.booking
+    SET book_status = 'COMPLETED',
+        book_remaining = 0,
+        book_last_update = CURRENT_TIMESTAMP
+    WHERE book_id = %s
+
 # ────────────────── Book Payment Queries ──────────────────
 book_payment:
   fetch_by_booking: >
@@ -382,9 +497,28 @@ customer:
     SELECT * FROM {schema}.customer
     ORDER BY cust_created_at DESC
 
+  fetch_page: >
+    SELECT * FROM {schema}.customer
+    WHERE (%s = '' OR
+           cust_id ILIKE %s OR
+           COALESCE(cust_name, '') ILIKE %s OR
+           COALESCE(cust_phone_number, '') ILIKE %s OR
+           COALESCE(cust_email_address, '') ILIKE %s)
+    ORDER BY cust_created_at DESC
+    LIMIT %s OFFSET %s
+
   count_all: >
     SELECT COUNT(*) AS total
     FROM {schema}.customer
+
+  count_filtered: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.customer
+    WHERE (%s = '' OR
+           cust_id ILIKE %s OR
+           COALESCE(cust_name, '') ILIKE %s OR
+           COALESCE(cust_phone_number, '') ILIKE %s OR
+           COALESCE(cust_email_address, '') ILIKE %s)
 
   fetch_by_id: >
     SELECT * FROM {schema}.customer
@@ -409,6 +543,27 @@ salesman:
   fetch_all: >
     SELECT * FROM {schema}.salesman
     ORDER BY slm_created_at DESC
+
+  fetch_page: >
+    SELECT * FROM {schema}.salesman
+    WHERE (%s = '' OR
+           slm_id ILIKE %s OR
+           COALESCE(slm_name, '') ILIKE %s OR
+           COALESCE(slm_company_name, '') ILIKE %s OR
+           COALESCE(slm_phone_number, '') ILIKE %s OR
+           COALESCE(slm_email_address, '') ILIKE %s)
+    ORDER BY slm_created_at DESC
+    LIMIT %s OFFSET %s
+
+  count_filtered: >
+    SELECT COUNT(*) AS total
+    FROM {schema}.salesman
+    WHERE (%s = '' OR
+           slm_id ILIKE %s OR
+           COALESCE(slm_name, '') ILIKE %s OR
+           COALESCE(slm_company_name, '') ILIKE %s OR
+           COALESCE(slm_phone_number, '') ILIKE %s OR
+           COALESCE(slm_email_address, '') ILIKE %s)
 
   fetch_by_id: >
     SELECT * FROM {schema}.salesman

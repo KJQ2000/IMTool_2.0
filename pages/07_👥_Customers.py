@@ -8,6 +8,13 @@ from auth_controller import require_auth
 from database_manager import DatabaseManager
 from logging_config import get_logger
 
+from utils.editable_table import (
+    render_filterable_editor,
+    render_pagination_controls,
+    save_table_changes,
+)
+from utils.query_cache import clear_query_caches, fetch_rows_cached, fetch_scalar_cached
+
 logger = get_logger(__name__)
 require_auth()
 st.markdown("## 👥 Customer Management")
@@ -17,9 +24,42 @@ tab_view, tab_add, tab_edit = st.tabs(["📋 View", "➕ Add", "✏️ Edit"])
 
 with tab_view:
     try:
-        customers = db.fetch_all("customer.fetch_all")
+        search_term = st.text_input(
+            "Search Customers",
+            key="cust_view_search",
+            placeholder="Customer ID / name / phone / email",
+        ).strip()
+        search_like = f"%{search_term}%"
+        total_rows = int(
+            fetch_scalar_cached(
+                "customer.count_filtered",
+                (search_term, search_like, search_like, search_like, search_like),
+            ) or 0
+        )
+        page_size, _, offset = render_pagination_controls(
+            table_key="cust_view",
+            total_rows=total_rows,
+        )
+        customers = fetch_rows_cached(
+            "customer.fetch_page",
+            (search_term, search_like, search_like, search_like, search_like, page_size, offset),
+        )
         if customers:
-            st.dataframe(pd.DataFrame(customers), use_container_width=True, height=500)
+            df_cust = pd.DataFrame(customers)
+            original_df, edited_df = render_filterable_editor(
+                df_cust, "cust_view", "cust_id",
+                disabled_columns=["cust_id", "cust_created_at", "cust_last_update"],
+            )
+            if st.button("💾 Save Changes", key="btn_save_cust_table"):
+                try:
+                    count = save_table_changes(original_df, edited_df, "customer", "cust_id")
+                    if count > 0:
+                        st.success(f"✅ Saved {count} row(s).")
+                        st.rerun()
+                    else:
+                        st.info("No changes detected.")
+                except Exception as e:
+                    st.error(f"Save failed: {e}")
         else:
             st.info("No customers found.")
     except Exception as e:
@@ -31,6 +71,7 @@ with tab_view:
         try:
             with db.transaction() as cur:
                 db.build_delete("customer", del_id, cur)
+            clear_query_caches()
             st.success(f"Deleted {del_id}")
             st.rerun()
         except Exception as e:
@@ -64,6 +105,7 @@ with tab_add:
                         vals.append(cv.strip())
                 with db.transaction() as cur:
                     pk = db.build_insert("customer", cols, vals, cur)
+                clear_query_caches()
                 st.success(f"✅ Customer {pk} added!")
             except Exception as e:
                 st.error(f"Failed: {e}")
@@ -99,7 +141,15 @@ with tab_edit:
                                 "cust_address", "cust_buyer_id", "cust_sst_reg_no", "cust_tin"]
                         vals = [e_name, e_email, e_phone, e_addr, e_buyer, e_sst, e_tin]
                         with db.transaction() as cur:
-                            db.build_update("customer", cols, vals, c["cust_id"], cur)
+                            db.build_update(
+                                "customer",
+                                cols,
+                                vals,
+                                c["cust_id"],
+                                cur,
+                                expected_last_update=c.get("cust_last_update"),
+                            )
+                        clear_query_caches()
                         st.success(f"✅ Updated {c['cust_id']}")
                         del st.session_state["editing_cust"]
                         st.rerun()

@@ -5,12 +5,13 @@ Streamlit-based inventory and sales management system for a jewellery business. 
 ## Main Areas
 
 - `app.py`: app entrypoint, login gate, sidebar, and top-level dashboard metrics.
+- `config/`: central query and prompt registries.
 - `pages/`: Streamlit pages for operational workflows.
 - `agents/`: OpenAI-powered question understanding, SQL generation, data evaluation, and summarisation steps.
 - `utils/`: logging, RAG, safe HTML, and safe path helpers.
-- `config.yaml`: central query registry and sequence configuration.
-- `prompts.yaml`: central prompt registry for AI agents.
 - `knowledge/`: text sources used by the RAG flow.
+- `docs/`: audits, reviews, and structural guidance.
+- `scripts/verification/`: repeatable verification and smoke-test scripts.
 - `system_files/pattern_images/`: repo-local pattern image assets.
 - `logs/`, `staging/`, `__pycache__/`: runtime/generated artifacts that should not be versioned.
 
@@ -38,15 +39,16 @@ streamlit run app.py
 
 ## Audit Docs
 
-- `REPO_AUDIT.md`
-- `SECURITY_REVIEW.md`
-- `PERFORMANCE_REVIEW.md`
-- `STRUCTURE_GUIDE.md`
-- `DELETE_CANDIDATES.md`
+- `docs/reviews/REPO_AUDIT.md`
+- `docs/reviews/SECURITY_REVIEW.md`
+- `docs/reviews/PERFORMANCE_REVIEW.md`
+- `docs/guides/STRUCTURE_GUIDE.md`
+- `docs/guides/DELETE_CANDIDATES.md`
+- `docs/audit/`
 
 ## Validation
 
-No automated test suite is currently present in the repository. The latest audit changes were validated with:
+No automated test suite is currently present in the repository. Current verification helpers live in `scripts/verification/`. The latest audit changes were validated with:
 
 ```bash
 C:\Windows\py.exe -3 -m compileall -q app.py auth_controller.py database_manager.py config_loader.py logging_config.py prompt_config.py utils agents pages

@@ -27,7 +27,7 @@ from logging_config import get_logger
 
 logger = get_logger(__name__)
 
-_CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
+_CONFIG_PATH = Path(__file__).resolve().parent / "config" / "config.yaml"
 
 
 @st.cache_data(show_spinner=False)

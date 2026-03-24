@@ -13,6 +13,13 @@ from config_loader import get_query
 from database_manager import DatabaseManager
 from logging_config import get_logger
 
+from utils.editable_table import (
+    render_filterable_editor,
+    render_pagination_controls,
+    save_table_changes,
+)
+from utils.query_cache import clear_query_caches, fetch_rows_cached, fetch_scalar_cached
+
 logger = get_logger(__name__)
 require_auth()
 st.markdown("## 💰 Sales Management")
@@ -43,9 +50,42 @@ tab_view, tab_add, tab_edit = st.tabs(["📋 View Sales", "➕ Create Sale", "�
 # ═══════════════ VIEW ═══════════════
 with tab_view:
     try:
-        sales = db.fetch_all("sale.fetch_all")
+        search_term = st.text_input(
+            "Search Sales",
+            key="sale_view_search",
+            placeholder="Sale ID / receipt / customer ID",
+        ).strip()
+        search_like = f"%{search_term}%"
+        total_rows = int(
+            fetch_scalar_cached(
+                "sale.count_filtered",
+                (search_term, search_like, search_like, search_like),
+            ) or 0
+        )
+        page_size, _, offset = render_pagination_controls(
+            table_key="sale_view",
+            total_rows=total_rows,
+        )
+        sales = fetch_rows_cached(
+            "sale.fetch_page",
+            (search_term, search_like, search_like, search_like, page_size, offset),
+        )
         if sales:
-            st.dataframe(pd.DataFrame(sales), use_container_width=True, height=500)
+            df_sales = pd.DataFrame(sales)
+            original_df, edited_df = render_filterable_editor(
+                df_sales, "sale_view", "sale_id",
+                disabled_columns=["sale_id", "sale_created_at", "sale_last_update"],
+            )
+            if st.button("💾 Save Changes", key="btn_save_sale_table"):
+                try:
+                    count = save_table_changes(original_df, edited_df, "sale", "sale_id")
+                    if count > 0:
+                        st.success(f"✅ Saved {count} row(s).")
+                        st.rerun()
+                    else:
+                        st.info("No changes detected.")
+                except Exception as e:
+                    st.error(f"Save failed: {e}")
 
             # Show stock items per sale
             with st.expander("🔍 View stock items for a sale"):
@@ -75,6 +115,7 @@ with tab_view:
                     sid = row["stk_id"] if isinstance(row, dict) else row[0]
                     cur.execute(reset_sql, (sid,))
                 db.build_delete("sale", del_id, cur)
+            clear_query_caches()
             st.success(f"Sale {del_id} deleted. Stocks reset to IN STOCK.")
             st.rerun()
         except Exception as e:
@@ -91,10 +132,10 @@ with tab_add:
         "Nothing is marked SOLD until you click the final confirm button."
     )
 
-    customers = db.fetch_all("customer.fetch_all")
+    customers = fetch_rows_cached("customer.fetch_all")
     cust_map = {f"{c.get('cust_name', '?')} ({c['cust_id']})": c["cust_id"] for c in customers}
 
-    available = db.fetch_all("stock.fetch_in_stock")
+    available = fetch_rows_cached("stock.fetch_in_stock")
     available_by_id = {s["stk_id"]: s for s in available}
 
     receipt_key = sale_state_key("receipt")
@@ -338,6 +379,7 @@ with tab_add:
                             f"Sale {sale_id} created. {len(selected_ids)} item(s) marked SOLD."
                         )
                         clear_sale_draft()
+                        clear_query_caches()
                         logger.info("Sale %s: %d items", sale_id, len(selected_ids))
                         st.rerun()
                     except Exception as e:
@@ -366,14 +408,36 @@ with tab_edit:
 
             if st.form_submit_button("💾 Save", use_container_width=True):
                 try:
-                    update_sql = get_query("sale.update_by_id", schema=db.schema)
+                    cols = [
+                        "sale_receipt_no",
+                        "sale_cust_id",
+                        "sale_sold_date",
+                        "sale_labor_sell",
+                        "sale_gold_sell",
+                        "sale_price",
+                        "sale_weight",
+                        "sale_official_receipt",
+                    ]
+                    vals = [
+                        e_receipt,
+                        sale.get("sale_cust_id", ""),
+                        sale.get("sale_sold_date", ""),
+                        e_labor,
+                        e_gold,
+                        e_price,
+                        e_weight,
+                        sale.get("sale_official_receipt", 0),
+                    ]
                     with db.transaction() as cur:
-                        cur.execute(update_sql, (
-                            e_receipt, sale.get("sale_cust_id", ""),
-                            sale.get("sale_sold_date", ""), e_labor, e_gold,
-                            e_price, e_weight, sale.get("sale_official_receipt", 0),
+                        db.build_update(
+                            "sale",
+                            cols,
+                            vals,
                             sale["sale_id"],
-                        ))
+                            cur,
+                            expected_last_update=sale.get("sale_last_update"),
+                        )
+                    clear_query_caches()
                     st.success(f"✅ Sale {sale['sale_id']} updated.")
                     del st.session_state["editing_sale"]
                     st.rerun()

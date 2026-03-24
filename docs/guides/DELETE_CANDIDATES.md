@@ -26,7 +26,7 @@ No files were deleted in this run.
 
 ## Medium-Confidence Candidates
 
-### `temp_parse.py`
+### `scripts/scratch/temp_parse.py`
 
 - Reason: standalone scraping/HTML parsing utility not referenced anywhere else in the repo
 - Risk if removed: medium, because it may be an ad hoc developer script
@@ -50,7 +50,7 @@ No files were deleted in this run.
 
 - Reason: active application assets referenced by pattern-management workflows
 
-### `prompts.yaml`
+### `config/prompts.yaml`
 
 - Reason: active prompt registry for the agent pipeline
 

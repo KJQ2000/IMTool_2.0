@@ -43,6 +43,7 @@ from logging_config import get_logger
 logger = get_logger(__name__)
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_UNSET = object()
 _FORBIDDEN_READONLY_KEYWORDS = {
     "ALTER",
     "CALL",
@@ -60,6 +61,10 @@ _FORBIDDEN_READONLY_KEYWORDS = {
 }
 
 
+class ConcurrencyConflictError(RuntimeError):
+    """Raised when a row changed after the user loaded it."""
+
+
 class DatabaseManager:
     """Enterprise-grade database manager with ACID compliance.
 
@@ -74,10 +79,13 @@ class DatabaseManager:
         try:
             db_secrets = st.secrets["connections"]["postgresql"]
             self._schema = db_secrets.get("schema", "konghin")
+            self._pool_wait_timeout_s = float(db_secrets.get("pool_wait_timeout_s", 5))
+            pool_minconn = int(db_secrets.get("minconn", 2))
+            pool_maxconn = int(db_secrets.get("maxconn", 20))
 
             self._pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=2,
-                maxconn=10,
+                minconn=pool_minconn,
+                maxconn=pool_maxconn,
                 host=db_secrets["host"],
                 port=int(db_secrets.get("port", 5432)),
                 dbname=db_secrets["dbname"],
@@ -100,9 +108,11 @@ class DatabaseManager:
         self._ro_pool: psycopg2.pool.ThreadedConnectionPool | None = None
         try:
             ro_secrets = st.secrets["connections"]["postgresql_readonly"]
+            ro_minconn = int(ro_secrets.get("minconn", 1))
+            ro_maxconn = int(ro_secrets.get("maxconn", 10))
             self._ro_pool = psycopg2.pool.ThreadedConnectionPool(
-                minconn=1,
-                maxconn=5,
+                minconn=ro_minconn,
+                maxconn=ro_maxconn,
                 host=ro_secrets["host"],
                 port=int(ro_secrets.get("port", 5432)),
                 dbname=ro_secrets["dbname"],
@@ -172,11 +182,31 @@ class DatabaseManager:
     # Connection Management
     # ──────────────────────────────────────────────────────────
 
+    def _borrow_conn(
+        self,
+        pool: psycopg2.pool.ThreadedConnectionPool,
+        *,
+        autocommit: bool,
+        pool_label: str,
+    ) -> psycopg2.extensions.connection:
+        """Borrow a connection, briefly waiting if the pool is saturated."""
+        deadline = time.perf_counter() + self._pool_wait_timeout_s
+        while True:
+            try:
+                conn = pool.getconn()
+                conn.autocommit = autocommit
+                return conn
+            except psycopg2.pool.PoolError:
+                if time.perf_counter() >= deadline:
+                    raise RuntimeError(
+                        f"{pool_label} connection pool exhausted after waiting "
+                        f"{self._pool_wait_timeout_s:.1f}s."
+                    )
+                time.sleep(0.05)
+
     def _get_conn(self) -> psycopg2.extensions.connection:
         """Get a connection from the pool with autocommit disabled."""
-        conn = self._pool.getconn()
-        conn.autocommit = False  # ACID: require explicit commit
-        return conn
+        return self._borrow_conn(self._pool, autocommit=False, pool_label="Primary")
 
     def _put_conn(self, conn: psycopg2.extensions.connection) -> None:
         """Return a connection to the pool."""
@@ -189,9 +219,8 @@ class DatabaseManager:
         The connection has autocommit=True since it's read-only.
         """
         pool = self._ro_pool or self._pool
-        conn = pool.getconn()
-        conn.autocommit = True
-        return conn
+        label = "Readonly" if self._ro_pool else "Primary"
+        return self._borrow_conn(pool, autocommit=True, pool_label=label)
 
     def return_readonly_connection(self, conn: psycopg2.extensions.connection) -> None:
         """Return a read-only connection to its pool."""
@@ -487,8 +516,15 @@ class DatabaseManager:
         cur.execute(sql, values)
 
     def build_update(
-        self, table: str, columns: list[str], values: list[Any], where_id: str, cur
-    ) -> None:
+        self,
+        table: str,
+        columns: list[str],
+        values: list[Any],
+        where_id: str,
+        cur,
+        *,
+        expected_last_update: Any = _UNSET,
+    ) -> int:
         """Build and execute a parameterized UPDATE with auto-timestamp for last_update.
 
         Parameters
@@ -498,6 +534,9 @@ class DatabaseManager:
         values: Corresponding values.
         where_id: The primary key value for the WHERE clause.
         cur: Active cursor within a transaction.
+        expected_last_update:
+            Original last-update value seen by the caller. When provided, the
+            update only succeeds if the row is unchanged since it was loaded.
         """
         prefix = get_prefix(table).lower()
         id_col = self._require_identifier(f"{prefix}_id", "column")
@@ -520,9 +559,19 @@ class DatabaseManager:
         set_clause = ", ".join(set_parts)
         sql = f"UPDATE {self._qualified_table_name(table)} SET {set_clause} WHERE {id_col} = %s"
         exec_values.append(where_id)
+        use_concurrency_check = expected_last_update is not _UNSET
+        if use_concurrency_check:
+            sql += f" AND {last_update_col} IS NOT DISTINCT FROM %s"
+            exec_values.append(expected_last_update)
 
         cur.execute(sql, exec_values)
+        if use_concurrency_check and cur.rowcount == 0:
+            raise ConcurrencyConflictError(
+                f"{table.upper()} {where_id} was modified by another user. "
+                "Reload the latest data before saving again."
+            )
         logger.info("Updated %s.%s WHERE %s = %s", self._schema, table, id_col, where_id)
+        return cur.rowcount
 
     def build_delete(self, table: str, where_id: str, cur) -> None:
         """Execute a parameterized DELETE by primary key."""
