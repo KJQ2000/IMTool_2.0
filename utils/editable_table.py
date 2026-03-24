@@ -154,6 +154,23 @@ def render_filterable_editor(
         key=f"{table_key}_editor",
     )
 
+    editor_state = st.session_state.get(f"{table_key}_editor", {})
+    edited_rows_dict = editor_state.get("edited_rows", {})
+    
+    if edited_rows_dict:
+        st.markdown("---")
+        with st.expander("📝 Unsaved Changes Preview", expanded=True):
+            for row_idx, changes in edited_rows_dict.items():
+                try:
+                    row_identifier = filtered_df.iloc[row_idx][id_column]
+                    for col, new_val in changes.items():
+                        orig_val = filtered_df.iloc[row_idx][col]
+                        st.markdown(
+                            f"- **Row ID {row_identifier}** &nbsp;👉&nbsp; `{col}` changed from `{orig_val}` to `{new_val}`"
+                        )
+                except Exception:
+                    pass
+
     return filtered_df, edited_df
 
 

@@ -303,82 +303,31 @@ with st.sidebar:
     )
 
 # ──────────────────────────────────────────────────────────
-# Main Dashboard (Home Page)
+# Application Routing
 # ──────────────────────────────────────────────────────────
-st.markdown(
-    """
-    <div class="main-header">
-        <img src="https://chopkonghin.com/cdn/shop/files/logo.png?v=1759327714&width=3840" style="max-height: 100px; margin-bottom: 1.5rem;">
-        <div class="main-title">ENTERPRISE INVENTORY</div>
-        <div class="main-subtitle">Management System</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+pages = {
+    "Dashboards": [
+        st.Page("pages/00_Home.py", title="Home", icon="🏠"),
+        st.Page("pages/01_Dashboard.py", title="Pattern Dashboard", icon="🏠"),
+    ],
+    "Inventory & Sales": [
+        st.Page("pages/03_Stocks.py", title="Stocks", icon="📦"),
+        st.Page("pages/04_Sales.py", title="Sales", icon="💰"),
+        st.Page("pages/06_Bookings.py", title="Bookings", icon="📖"),
+        st.Page("pages/05_Purchases.py", title="Purchases", icon="📋"),
+    ],
+    "Relations": [
+        st.Page("pages/07_Customers.py", title="Customers", icon="👥"),
+        st.Page("pages/08_Salesmen.py", title="Salesmen", icon="🤝"),
+    ],
+    "Tools": [
+         st.Page("pages/02_Pattern_Management.py", title="Pattern Management", icon="🎨"),
+         st.Page("pages/09_Batch_Import.py", title="Batch Import", icon="📥"),
+         st.Page("pages/10_Barcode.py", title="Barcode", icon="🏷️"),
+         st.Page("pages/11_Agentic_Intelligence.py", title="Agentic Intelligence", icon="🤖"),
+         st.Page("pages/12_Custom_Table.py", title="Custom Stock Table", icon="🧩"),
+    ]
+}
 
-logger.info("Dashboard loaded for user: %s", get_current_user())
-
-# Dashboard metrics
-try:
-    db = DatabaseManager.get_instance()
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    # Stock count
-    in_stock = db.fetch_scalar("stock.count_by_status", ("IN STOCK",)) or 0
-    with col1:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(in_stock)}</div>
-                <div class="metric-label">📦 Items In Stock</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # Sold items
-    sold_items = db.fetch_scalar("stock.count_by_status", ("SOLD",)) or 0
-    with col2:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(sold_items)}</div>
-                <div class="metric-label">💰 Items Sold</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # Booked items
-    booked_items = db.fetch_scalar("stock.count_by_status", ("BOOKED",)) or 0
-    with col3:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(booked_items)}</div>
-                <div class="metric-label">📖 Items Booked</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # Customers
-    customers = db.fetch_scalar("customer.count_all") or 0
-    with col4:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(customers)}</div>
-                <div class="metric-label">👥 Customers</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.info("👈 Use the sidebar to navigate between modules: Stocks, Sales, Purchases, Bookings, Customers, Salesmen, and Agentic Intelligence.")
-
-except Exception as e:
-    st.warning("⚠️ Unable to load dashboard metrics. Please check your database connection.")
-    logger.error("Dashboard metrics failed: %s", e, exc_info=True)
+pg = st.navigation(pages)
+pg.run()

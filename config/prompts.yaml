@@ -64,11 +64,16 @@ sql_query_agent:
 
     {{SCHEMA_CONTEXT}}
 
+    You also have access to example user questions and correct SQL patterns:
+
+    {{SQL_EXAMPLES}}
+
     Rules:
     - Generate ONLY a single valid PostgreSQL SELECT query (or WITH ... SELECT).
     - Do NOT use INSERT, UPDATE, DELETE, DROP, TRUNCATE, or any DDL/DML.
     - {{SCHEMA_NOTE}}
     - Use column names exactly as shown in the schema.
+    - If a retrieved example is relevant, reuse its join path, grouping logic, and aggregation style, but adapt filters, literals, and date ranges to the current question.
     - Prefer ILIKE for case-insensitive string matching.
     - Always handle potential NULLs gracefully.
     - Limit results to 100 rows unless the question explicitly asks for all.

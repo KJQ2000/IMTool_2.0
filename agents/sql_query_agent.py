@@ -26,7 +26,8 @@ from utils.logging_utils import get_logger
 logger = get_logger(__name__)
 
 _client: OpenAI | None = None
-_README_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "Bilingual README.txt"
+_DATABASE_REFERENCE_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "database_reference.md"
+_SQL_EXAMPLES_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "sql_query_examples.txt"
 _MAX_RETRIES = int(os.getenv("MAX_SQL_RETRIES", "3"))
 
 _KNOWN_TABLES = [
@@ -48,7 +49,7 @@ def _get_client() -> OpenAI:
     return _client
 
 
-def _build_system_prompt(schema_context: str, db_schema: str) -> str:
+def _build_system_prompt(schema_context: str, sql_examples: str, db_schema: str) -> str:
     schema_note = (
         f'- ALWAYS prefix every table name with the schema name: '
         f'"{db_schema}.<table_name>" (e.g. {db_schema}.stock, {db_schema}.sale).\n'
@@ -59,6 +60,7 @@ def _build_system_prompt(schema_context: str, db_schema: str) -> str:
         values={
             "DB_SCHEMA": db_schema,
             "SCHEMA_CONTEXT": schema_context,
+            "SQL_EXAMPLES": sql_examples,
             "SCHEMA_NOTE": schema_note,
         },
     )
@@ -86,10 +88,23 @@ def _sanitise_sql(sql: str) -> str:
 def _apply_schema_prefix(sql: str, db_schema: str) -> str:
     if not db_schema:
         return sql
+        
+    # Temporarily hide string literals to prevent replacing words inside quotes
+    literals = []
+    def literal_replacer(match):
+        literals.append(match.group(0))
+        return f"__LITERAL_{len(literals)-1}__"
+        
+    sql_no_literals = re.sub(r"'[^']*'", literal_replacer, sql)
+    
     for table in _KNOWN_TABLES:
         pattern = rf"(?<![\w.]){re.escape(table)}(?!\w)"
-        sql = re.sub(pattern, f"{db_schema}.{table}", sql, flags=re.IGNORECASE)
-    return sql
+        sql_no_literals = re.sub(pattern, f"{db_schema}.{table}", sql_no_literals, flags=re.IGNORECASE)
+        
+    for i, lit in enumerate(literals):
+        sql_no_literals = sql_no_literals.replace(f"__LITERAL_{i}__", lit)
+        
+    return sql_no_literals
 
 
 def run(question: str, chat_history: str = "", previous_feedback: str | None = None) -> dict[str, Any]:
@@ -112,7 +127,11 @@ def run(question: str, chat_history: str = "", previous_feedback: str | None = N
         db_schema = os.getenv("DB_SCHEMA", "konghin")
 
     client = _get_client()
-    schema_context = retrieve_relevant_chunks(question, _README_PATH, top_k=6)
+    try:
+        schema_context = _DATABASE_REFERENCE_PATH.read_text(encoding="utf-8")
+    except Exception:
+        schema_context = "Schema reference not found."
+    sql_examples = retrieve_relevant_chunks(question, _SQL_EXAMPLES_PATH, top_k=5)
 
     # Import here to avoid circular deps
     from database_manager import DatabaseManager
@@ -135,7 +154,7 @@ def run(question: str, chat_history: str = "", previous_feedback: str | None = N
             user_msg += f"\n\nPrevious error: {last_error}. Please fix the query."
 
         messages = [
-            {"role": "system", "content": _build_system_prompt(schema_context, db_schema)},
+            {"role": "system", "content": _build_system_prompt(schema_context, sql_examples, db_schema)},
             {"role": "user", "content": user_msg},
         ]
 

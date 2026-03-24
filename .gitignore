@@ -57,3 +57,6 @@ Thumbs.db
 *.temp
 *.bak
 *.orig
+
+# Knowledge Base
+knowledge/

@@ -41,9 +41,23 @@ def _split_into_chunks(text: str, chunk_size: int = 300, overlap: int = 50) -> L
 
 
 def _split_by_section(text: str) -> List[str]:
-    """Split text on section delimiters (========) and return non-empty sections."""
-    sections = re.split(r"={3,}", text)
-    return [s.strip() for s in sections if s.strip()]
+    """Split text on section delimiters (e.g., ====== TITLE ======) keeping the header with the content."""
+    lines = text.splitlines()
+    chunks = []
+    current_chunk = []
+    
+    for line in lines:
+        stripped = line.strip()
+        if re.match(r"^={3,}.*?={3,}$", stripped) or re.match(r"^={3,}$", stripped):
+            if current_chunk:
+                chunks.append("\n".join(current_chunk).strip())
+                current_chunk = []
+        current_chunk.append(line)
+        
+    if current_chunk:
+        chunks.append("\n".join(current_chunk).strip())
+        
+    return [c for c in chunks if c.strip()]
 
 
 # ──────────────────────────────────────────────────────────

@@ -86,7 +86,7 @@ if selected_type:
                     if st.button(f"🔍 View Stocks", key=f"btn_{selected_type}_{pattern_name}", use_container_width=True):
                         st.session_state["dash_filter_type"] = selected_type
                         st.session_state["dash_filter_pattern"] = pattern_name
-                        st.switch_page("pages/03_📦_Stocks.py")
+                        st.switch_page("pages/03_Stocks.py")
     else:
         st.info(
             f"No patterns found for **{selected_type}**. "

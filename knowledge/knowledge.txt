@@ -1,116 +1,121 @@
-🚚 Free Shipping Across Malaysia!
-Home
-Collections Collections Shop by Category Rings Earrings Charms Pendants Necklaces Bracelets Bangles Anklets Gold Bars Shop by Gold Type 916 Gold 999 Gold
-Collections
-Shop by Category Rings Earrings Charms Pendants Necklaces Bracelets Bangles Anklets Gold Bars
-Shop by Category
-Rings
-Earrings
-Charms
-Pendants
-Necklaces
-Bracelets
-Bangles
-Anklets
-Gold Bars
-Shop by Gold Type 916 Gold 999 Gold
-Shop by Gold Type
-916 Gold
-999 Gold
-Gifts Gifts Special Gift For Her For Him For Baby For Parent Gift Accessories & Engraving for Your Special One Gift Box Engraving
-Gifts
-Special Gift For Her For Him For Baby For Parent
-Special Gift
-For Her
-For Him
-For Baby
-For Parent
-Gift Accessories & Engraving for Your Special One Gift Box Engraving
-Gift Accessories & Engraving for Your Special One
-Gift Box
-Engraving
-Contact Us
-Collections Shop by Category Rings Earrings Charms Pendants Necklaces Bracelets Bangles Anklets Gold Bars Shop by Gold Type 916 Gold 999 Gold
-Gifts Special Gift For Her For Him For Baby For Parent Gift Accessories & Engraving for Your Special One Gift Box Engraving
-More
-Orders
-Profile
-Have an account? Log in to check out faster.
-Refund & Exchange Policy
-Thank you for shopping at Chop Kong Hin. We’re sure that you’ll love your Chop Kong Hin Jewellery’s item, but on the rare occasion that it isn’t 100% right (damaged during shipment or wrong item/type/shade/etc), you can just send it back and we’ll be more than happy to give you a full refund or an exchange.
-If you are not entirely satisfied with your purchase, we're here to help.
-STANDARD RETURN POLICY
-At Chop Kong Hin , we value your satisfaction and strive to ensure every purchase meets the highest standards of craftsmanship and quality. However, if your item does not meet your expectations, we are pleased to offer a clear and fair refund and exchange process.
-Chop Kong Hin
-We strive to ensure your complete satisfaction with every purchase. However, please note that our policy differs between engravable and non-engravable products due to the nature of customization.
-engravable
-non-engravable
-Customized Engravable Product
-Each engraved piece is made uniquely for you — a personal expression of meaning, crafted with precision and care. Because every engraving is customized to your specific request, these items are non-refundable and non-exchangeable .
-non-refundable and non-exchangeable
-This policy ensures that your jewelry remains one-of-a-kind, created exclusively to reflect your sentiment, name, or memory. Once engraved, it becomes a personalized masterpiece that cannot be resold or altered without compromising its integrity.
-personalized masterpiece
-We kindly encourage you to review your engraving details carefully before confirming your order. Our team is always here to assist you in perfecting your design before production begins.
-Non-Customized product
-Products designated as non-engravable are offered in their original form, precisely as showcased in our product images. These pieces are not eligible for any form of personalization, including custom engravings, inscriptions, wishing messages, or design alterations. Each item is crafted and presented to reflect its authentic design and exquisite craftsmanship, just as intended.
-EXCHANGES & RETURNS
-Eligibility Period
-Refunds or exchanges are only applicable within 7 days from the date you receive your item. Requests submitted after this period will not be eligible.
-only applicable within 7 days
-Return & Inspection Process
-All returned items must be shipped back to us for verification and quality inspection. The investigation and processing period typically takes 7–14 working days upon receiving the returned goods. Please ensure all returned items are in their original condition , unworn, and accompanied by the original packaging, and receipt .
-shipped back to us
-investigation and processing period
-7–14 working days
-in their original condition
-original packaging, and receipt
-Exchange Policy
-Exchanges are permitted for items of equal or higher value .
-equal or higher value
-If the exchange item’s price is lower than the original purchase , the price difference will be compensated with store vouchers .
-lower than the original purchase
-price difference will be compensated with store vouchers
-If the exchange item’s price is higher , customers will be required to pay the difference before the exchange can be completed.
-higher
-Refund Options
-We offer two refund methods to best accommodate your preference:
-Full Refund in Store Vouchers: Receive the total purchase amount as a store voucher, redeemable on your next order.
-Full Refund in Store Vouchers:
-Partial Refund in Cash: Receive a cash refund with a 10% deduction from the total purchase amount to cover administrative and handling costs.
-Partial Refund in Cash:
-cash refund with a 10% deduction
-Refunds will only be issued once the item has been inspected and approved by our quality assurance team.
-Non-Returnable Items
-For hygiene and quality reasons, certain items may not be eligible for return or exchange. These include:
-Customized or personalized items
-Items purchased during clearance or promotional periods
-Worn or damaged items due to misuse
-Shipping Responsibility
-Customers are responsible for all return shipping costs unless the item is confirmed to be defective or incorrect upon inspection.
-all return shipping costs
-We recommend using a trackable shipping service and retaining proof of postage.
-trackable shipping service
-Lost Parcel
-For customers who have purchased shipping insurance, in the event of a lost parcel, refunds will be issued based on the amount reimbursed to us by the courier company.
-Please note that all lost parcel claims require an investigation with the courier company. We will only proceed with the refund once the investigation has been completed and the reimbursement amount has been confirmed by the courier.
-We appreciate your patience and understanding while we work with the courier to resolve the matter.
-Our Commitment
-We are committed to handling each case with integrity and fairness. Every refund or exchange request is carefully reviewed to ensure transparency and customer satisfaction. Your understanding and cooperation allow us to continue delivering a seamless and trustworthy shopping experience.
-Contact Channels
-To request a refund or exchange, please reach out to our customer service team via:
-WhatsApp: +60107799253
-WhatsApp:
-Email: konghin1928@gmail.com
-Email:
-Our support team will guide you through the return process and provide the necessary shipping instructions.
-About Chop Kong Hin About Chop Kong Hin
-Our Story
-Customer Care Customer Care
-Privacy Policy
-FAQs
-Profile Profile
-My Account
-Order History
-Privacy policy
-Refund policy
-Terms of service
+====== PROJECT OVERVIEW ======
+IMTool Improved is an internal Streamlit application for Chop Kong Hin. It is
+used by staff to manage stock, purchases, sales, bookings, customers, salesmen,
+barcode workflows, pattern mappings, and an internal AI assistant. The business
+domain is jewellery inventory and sales, especially 916 and 999 gold items.
+The main operational tables are stock, purchase, sale, booking, book_payment,
+customer, and salesman.
+
+====== ACCESS AND SECURITY ======
+This is a staff-only system. There is no self-service account registration.
+User accounts must be provisioned by authorized IT administrators. The app uses
+Streamlit session state for login sessions and verifies passwords against the
+users table. Bcrypt is the intended password model, and legacy plain-text
+passwords are migrated after successful login. Every page calls require_auth()
+before showing business data.
+
+====== STOCK LIFECYCLE ======
+The stock table is the center of the system. A stock item usually starts in
+status IN STOCK. It can move to BOOKED through the booking flow or SOLD through
+the sales flow. Stock rows store original purchase cost and later store booking
+or sale pricing details. Important stock fields include stk_id, stk_type,
+stk_pattern, stk_weight, stk_gold_type, stk_gold_cost, stk_labor_cost,
+stk_status, stk_pur_id, stk_sale_id, stk_book_id, stk_barcode, stk_tag, and
+stk_remark.
+
+====== SALES WORKFLOW ======
+One sale can contain multiple stock items. During sale creation, the app lets
+staff pick multiple IN STOCK items and enter sell weight, gold sell price, and
+labor sell for each item. When the sale is confirmed, the code locks each stock
+row with FOR UPDATE, verifies that it is still IN STOCK, creates a sale header,
+and marks each linked stock item as SOLD. Profit is calculated per stock item
+from sell revenue minus original cost.
+
+====== BOOKING WORKFLOW ======
+One booking can contain multiple stock items. The booking page allows staff to
+select multiple IN STOCK items, enter per-item booking pricing, and collect an
+optional initial deposit. The booking header stores aggregate totals such as
+book_price and book_remaining, while item-level booking pricing is written onto
+the stock rows. Additional payments are stored in the book_payment table. When
+a booking is closed, the app locks the booking and linked stock rows, adds any
+final payment needed, marks the booking as COMPLETED, creates a sale record,
+and converts the booked stock rows to SOLD in one atomic flow.
+
+====== DATABASE SHAPE ======
+The live schema name is konghin. Main business tables are users, customer,
+salesman, purchase, stock, sale, booking, book_payment, category_pattern_mapping,
+and metadata. There are currently no physical foreign key constraints in the
+live schema, so relationships are enforced mainly by application logic. Logical
+join paths include stock.stk_pur_id to purchase.pur_id, stock.stk_sale_id to
+sale.sale_id, stock.stk_book_id to booking.book_id, sale.sale_cust_id to
+customer.cust_id, booking.book_cust_id to customer.cust_id, purchase.pur_slm_id
+to salesman.slm_id, and book_payment.bp_book_id to booking.book_id.
+
+====== DATA INTEGRITY AND CONCURRENCY ======
+The system uses explicit database transactions for critical writes. Generic CRUD
+editing now checks the original last_update timestamp before saving so the app
+can reject stale edits instead of silently overwriting another user's changes.
+Sales and bookings use SELECT FOR UPDATE on stock or booking rows before
+changing them. This means critical inventory actions are designed to be safer
+when multiple staff are using the system at the same time.
+
+====== CACHING AND PERFORMANCE ======
+The app caches the DatabaseManager singleton and also caches selected read
+queries through shared helpers. Main CRUD pages now use SQL pagination and
+server-side counts instead of loading full tables first. Caches are cleared
+after successful writes so screens do not keep stale data longer than needed.
+
+====== CURRENT AI ASSISTANT ======
+The Agentic Intelligence page uses a four-stage pipeline. First, a question
+understanding agent decides whether a question is general or database-related.
+If it is general, the assistant retrieves relevant chunks from this
+knowledge.txt file. If it is database-related, a SQL agent generates read-only
+SQL, a data evaluation agent checks result quality, and a summary agent writes
+the final answer. The SQL agent uses a separate schema guide file named
+Bilingual README.txt for grounding.
+
+====== COMPANY OVERVIEW ======
+Chop Kong Hin's official website presents the company as a gold jewellery
+retailer with 916 and 999 gold product lines, gift-focused presentation, and
+engraving services. The homepage promotes free shipping across Malaysia and
+also notes that not all products are listed online. Customers are encouraged to
+contact the company if they are searching for items not shown on the website.
+
+====== REFUND AND EXCHANGE POLICY ======
+Based on the official Chop Kong Hin refund and exchange policy page, refund or
+exchange requests should be made within 7 days from the date the customer
+receives the item. Returned items are inspected after being shipped back to the
+company. The inspection and processing period typically takes 7 to 14 working
+days after the goods are received. Returned items should be unworn, in original
+condition, and accompanied by original packaging, certificates, and receipt.
+
+====== CUSTOMIZED ITEM POLICY ======
+The official policy states that customized engravable items are non-refundable
+and non-exchangeable because they are personalized to the customer's request.
+For non-customized products, the site describes them as items sold in their
+original form without personalization or design alteration.
+
+====== REFUND METHODS AND EXCHANGE RULES ======
+The official policy describes two refund methods: full refund as store vouchers
+or a cash refund with a 10 percent deduction for administrative and handling
+costs. Exchanges are allowed for items of equal or higher value. If the
+replacement item is lower in value, the difference is compensated with store
+vouchers. If the replacement item is higher in value, the customer pays the
+difference. Customers are responsible for return shipping unless the item is
+confirmed to be defective or incorrect after inspection.
+
+====== SHIPPING, GIFTING, AND ENGRAVING ======
+Current official site content highlights delivery across Malaysia, premium gift
+packaging, and custom engraving for selected items. Product-page FAQ content
+mentions standard delivery, express courier, and store collection options.
+Current customer-facing examples mention free standard shipping for orders of
+RM100 and above, a lower-fee option for smaller orders, and express courier as
+a paid upgrade. The site also presents engraving for names, dates, messages,
+images, or drawings, with simpler designs recommended for smaller items such as
+rings.
+
+====== CUSTOMER CONTACT ======
+The official refund and exchange policy page lists these customer service
+channels: WhatsApp +60107799253 and email konghin1928@gmail.com. For case-based
+questions about refunds, exchanges, damaged parcels, engraving details, or
+special orders, those official channels should be recommended.
