@@ -44,79 +44,119 @@ if selected_type:
         (selected_type,),
     )
 
+    # ── Search / Filter ──
+    search_query = st.text_input(
+        "🔍 Search patterns by name",
+        key="dash_pattern_search",
+        placeholder="Type to filter pattern names...",
+    )
+
     if patterns:
-        # Display in a grid
-        cols_per_row = 4
-        for i in range(0, len(patterns), cols_per_row):
-            cols = st.columns(cols_per_row)
-            for j, col in enumerate(cols):
-                idx = i + j
-                if idx >= len(patterns):
-                    break
-                p = patterns[idx]
-                pattern_name = p.get("cpat_pattern", "Unknown")
-                image_path = p.get("cpat_image_path", "")
-                safe_pattern_name = escape_html(pattern_name)
+        # Apply search filter
+        if search_query.strip():
+            q = search_query.strip().lower()
+            patterns = [
+                p for p in patterns
+                if q in (p.get("cpat_pattern", "") or "").lower()
+            ]
 
-                with col:
-                    st.markdown(
-                        f"""
-                        <div style="background:#FFFFFF;border:1px solid #E2E8F0;box-shadow:0 4px 15px rgba(212,175,55,0.05);
-                                    border-radius:12px;padding:1.4rem;text-align:center;
-                                    margin-bottom:1rem;transition:all 0.4s ease;">
-                            <div style="font-weight:600;font-family:'Cinzel', serif;color:#0B2545;font-size:1.1rem;
-                                        margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:1px;">{safe_pattern_name}</div>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+        if patterns:
+            # Display in a grid
+            cols_per_row = 4
+            for i in range(0, len(patterns), cols_per_row):
+                cols = st.columns(cols_per_row)
+                for j, col in enumerate(cols):
+                    idx = i + j
+                    if idx >= len(patterns):
+                        break
+                    p = patterns[idx]
+                    pattern_name = p.get("cpat_pattern", "Unknown")
+                    image_path = p.get("cpat_image_path", "")
+                    safe_pattern_name = escape_html(pattern_name)
 
-                    # Try to display the image
-                    if image_path:
-                        img_path = resolve_repo_local_file(image_path, REPO_ROOT)
-                        if img_path is not None:
-                            st.image(str(img_path), caption=pattern_name, use_container_width=True)
-                        elif image_path.startswith(("http://", "https://")):
-                            st.image(image_path, caption=pattern_name, use_container_width=True)
+                    with col:
+                        st.markdown(
+                            f"""
+                            <div style="background:#FFFFFF;border:1px solid #E2E8F0;box-shadow:0 4px 15px rgba(212,175,55,0.05);
+                                        border-radius:12px;padding:1.4rem;text-align:center;
+                                        margin-bottom:1rem;transition:all 0.4s ease;">
+                                <div style="font-weight:600;font-family:'Cinzel', serif;color:#0B2545;font-size:1.1rem;
+                                            margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:1px;">{safe_pattern_name}</div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                        # Try to display the image
+                        if image_path:
+                            img_path = resolve_repo_local_file(image_path, REPO_ROOT)
+                            if img_path is not None:
+                                st.image(str(img_path), caption=pattern_name, use_container_width=True)
+                            elif image_path.startswith(("http://", "https://")):
+                                st.image(image_path, caption=pattern_name, use_container_width=True)
+                            else:
+                                st.caption(f"📷 Image not found: {image_path}")
                         else:
-                            st.caption(f"📷 Image not found: {image_path}")
-                    else:
-                        st.caption("📷 No image assigned")
+                            st.caption("📷 No image assigned")
 
-                    if st.button(f"🔍 View Stocks", key=f"btn_{selected_type}_{pattern_name}", use_container_width=True):
-                        st.session_state["dash_filter_type"] = selected_type
-                        st.session_state["dash_filter_pattern"] = pattern_name
-                        st.switch_page("pages/03_Stocks.py")
+                        if st.button(f"🔍 View Stocks", key=f"btn_{selected_type}_{pattern_name}", use_container_width=True):
+                            st.session_state["dash_filter_type"] = selected_type
+                            st.session_state["dash_filter_pattern"] = pattern_name
+                            st.switch_page("pages/03_Stocks.py")
+        else:
+            st.info(f"No patterns matching **\"{search_query}\"** found.")
     else:
         st.info(
             f"No patterns found for **{selected_type}**. "
             "Use the **Pattern Management** page to map patterns to stock types."
         )
 
-    # Also show distinct stk_pattern values from the stock table for this type
+    # ── Missing Patterns (no photo yet) ──
     st.markdown("---")
-    st.markdown(f"#### 📋 Stock Patterns (from inventory) for {selected_type}")
+    st.markdown(f"#### 📋 Missing Patterns (no photo yet) for {selected_type}")
+    st.caption("Patterns that exist in stock inventory but have no entry in Pattern Management.")
     try:
         stk_patterns = db.fetch_all("stock.fetch_distinct_patterns_by_type", (selected_type,))
+        stk_pattern_names = {
+            (row.get("stk_pattern", "") or "").strip()
+            for row in (stk_patterns or [])
+            if (row.get("stk_pattern", "") or "").strip()
+        }
 
-        if stk_patterns:
+        # Re-fetch full cpat_patterns list (not search-filtered)
+        all_cpat = db.fetch_all(
+            "category_pattern_mapping.fetch_distinct_patterns_by_category",
+            (selected_type,),
+        )
+        cpat_pattern_names = {
+            (row.get("cpat_pattern", "") or "").strip()
+            for row in (all_cpat or [])
+            if (row.get("cpat_pattern", "") or "").strip()
+        }
+
+        missing = sorted(stk_pattern_names - cpat_pattern_names)
+
+        if missing:
+            st.warning(f"**{len(missing)}** pattern(s) in inventory still need a photo.")
             cols_per_row = 6
-            for i in range(0, len(stk_patterns), cols_per_row):
+            for i in range(0, len(missing), cols_per_row):
                 cols = st.columns(cols_per_row)
                 for j, col in enumerate(cols):
                     idx = i + j
-                    if idx >= len(stk_patterns):
+                    if idx >= len(missing):
                         break
-                    pname = stk_patterns[idx].get("stk_pattern", "")
+                    pname = missing[idx]
                     with col:
                         st.markdown(
-                            f'<div style="background:#F4F6F9;border:1px solid #E2E8F0;'
+                            f'<div style="background:#FFF8E1;border:1px solid #FFB300;'
                             f'border-radius:8px;padding:0.75rem;text-align:center;'
-                            f'font-size:0.85rem;color:#2B2D42;font-weight:500;letter-spacing:1px;">{escape_html(pname)}</div>',
+                            f'font-size:0.85rem;color:#E65100;font-weight:600;letter-spacing:1px;">'
+                            f'📷 {escape_html(pname)}</div>',
                             unsafe_allow_html=True,
                         )
         else:
-            st.caption("No stock patterns found in inventory for this type.")
+            st.success("✅ All stock patterns have photos in Pattern Management!")
     except Exception as e:
         st.warning(f"Could not load stock patterns: {e}")
-        logger.error("Dashboard stock pattern fetch failed", exc_info=True)
+        logger.error("Dashboard missing pattern fetch failed", exc_info=True)
+

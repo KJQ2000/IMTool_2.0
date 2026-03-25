@@ -189,6 +189,11 @@ st.markdown(
     section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h4 {
         color: var(--primary-navy) !important;
     }
+    
+    /* Ensure sidebar buttons keep their white text instead of inheriting the navy p tag color */
+    section[data-testid="stSidebar"] [data-testid="stButton"] [data-testid="stMarkdownContainer"] p {
+        color: #FFFFFF !important;
+    }
     .sidebar-user {
         color: var(--text-muted) !important;
         font-size: 0.85rem;
@@ -214,7 +219,7 @@ st.markdown(
     .stDataFrame {
         border: 1px solid var(--border-color);
         border-radius: 12px;
-        overflow: hidden;
+        overflow: visible;
     }
 
     /* Expander */

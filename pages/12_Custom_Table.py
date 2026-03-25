@@ -16,6 +16,7 @@ import streamlit as st
 from auth_controller import require_auth
 from database_manager import DatabaseManager
 from logging_config import get_logger
+from utils.html_utils import escape_html
 
 logger = get_logger(__name__)
 require_auth()
@@ -262,11 +263,7 @@ with content_col:
             "Search",
             placeholder="Search across all loaded fields...",
         )
-        tag_mode_label = st.radio(
-            "Tag Match",
-            ["Any selected tag", "All selected tags"],
-            horizontal=True,
-        )
+
         sort_candidates = selected_columns if selected_columns else all_columns
         default_sort = "stk_created_at" if "stk_created_at" in sort_candidates else sort_candidates[0]
         sort_column = st.selectbox(
@@ -278,13 +275,44 @@ with content_col:
         sort_order = st.selectbox("Order", ["Descending", "Ascending"], index=0)
 
     with top_right:
-        selected_tags = st.multiselect(
-            "Filter by stk_tag",
-            options=distinct_tags,
-            placeholder="Choose one or more tags",
-            help="Tags are split from stk_tag by ';' and matched exactly.",
+        st.markdown("**Filter by stk_tag**")
+        tag_mode_label = st.radio(
+            "Match condition",
+            ["Any selected tags", "All selected tags"],
+            horizontal=True,
+            label_visibility="collapsed",
         )
-        st.caption(f"{len(distinct_tags)} distinct tag(s) found")
+        selected_tags = st.multiselect(
+            "Select tags",
+            options=distinct_tags,
+            default=[],
+            label_visibility="collapsed",
+        )
+
+    with st.expander("🎯 Column Dropdown Filters", expanded=False):
+        st.caption("Filter data further by selecting specific values for any visible column.")
+        filter_cols = st.columns(4)
+        column_filters = {}
+        for i, col in enumerate(selected_columns):
+            unique_vals = df[col].dropna().unique().tolist()
+            if not unique_vals:
+                continue
+            
+            try:
+                unique_vals = sorted(unique_vals)
+            except TypeError:
+                unique_vals = sorted(unique_vals, key=lambda x: str(x).lower())
+
+            with filter_cols[i % 4]:
+                selected_vals = st.multiselect(
+                    prettify_column(col),
+                    options=unique_vals,
+                    default=[],
+                    format_func=str,
+                    placeholder="All...",
+                )
+                if selected_vals:
+                    column_filters[col] = selected_vals
 
     filtered_df = apply_tag_filter(
         filtered_df,
@@ -292,6 +320,10 @@ with content_col:
         "ALL" if tag_mode_label == "All selected tags" else "ANY",
     )
     filtered_df = apply_search_filter(filtered_df, search_text)
+    
+    for col, vals in column_filters.items():
+        filtered_df = filtered_df[filtered_df[col].isin(vals)]
+
     filtered_df = apply_sort(filtered_df, sort_column, sort_order == "Ascending")
 
     metrics_col1, metrics_col2, metrics_col3 = st.columns(3)

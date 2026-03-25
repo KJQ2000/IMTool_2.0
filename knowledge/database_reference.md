@@ -11,19 +11,6 @@ current `konghin` schema plus application-level workflow interpretation.
 - Important implication: relationships are enforced mainly by application code
   and query logic, not by database-level FK constraints
 
-### Row counts at snapshot time
-
-- `purchase`: 1033
-- `stock`: 752
-- `salesman`: 44
-- `book_payment`: 42
-- `booking`: 26
-- `category_pattern_mapping`: 22
-- `sale`: 19
-- `metadata`: 10
-- `customer`: 6
-- `users`: 1
-
 ## Key conventions
 
 ### ID prefixes and sequence-backed keys

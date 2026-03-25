@@ -41,22 +41,25 @@ def render_pagination_controls(
     """Render pagination controls and return (page_size, page_number, offset)."""
     size_key = f"{table_key}_page_size"
     page_key = f"{table_key}_page"
+    is_expanded = st.session_state.get(f"{table_key}_is_expanded", False)
 
-    if size_key not in st.session_state:
-        st.session_state[size_key] = default_page_size
+    # Determine current page size without conflicting with widget key
+    current_size = st.session_state.get(size_key, default_page_size)
+    if current_size not in page_size_options:
+        current_size = default_page_size
+
     if page_key not in st.session_state:
         st.session_state[page_key] = 1
 
     c1, c2, c3 = st.columns([1, 1, 2])
     with c1:
-        page_size = st.selectbox(
+        page_size_val = st.selectbox(
             "Rows per page",
             list(page_size_options),
-            index=list(page_size_options).index(st.session_state[size_key])
-            if st.session_state[size_key] in page_size_options else 1,
+            index=list(page_size_options).index(current_size),
             key=size_key,
         )
-    total_pages = max(1, (total_rows + page_size - 1) // page_size)
+    total_pages = max(1, (total_rows + page_size_val - 1) // page_size_val)
     st.session_state[page_key] = min(max(1, int(st.session_state[page_key])), total_pages)
     with c2:
         page_number = st.number_input(
@@ -68,12 +71,14 @@ def render_pagination_controls(
             key=page_key,
         )
     with c3:
-        start_row = 0 if total_rows == 0 else (page_number - 1) * page_size + 1
-        end_row = min(total_rows, page_number * page_size)
+        start_row = 0 if total_rows == 0 else (page_number - 1) * page_size_val + 1
+        end_row = min(total_rows, page_number * page_size_val)
         st.caption(f"Showing database rows {start_row}-{end_row} of {total_rows}")
 
-    offset = (page_number - 1) * page_size
-    return int(page_size), int(page_number), int(offset)
+    offset_val = (page_number - 1) * page_size_val
+    if is_expanded:
+        return max(1, total_rows), 1, 0
+    return int(page_size_val), int(page_number), int(offset_val)
 
 
 def render_filterable_editor(
@@ -132,8 +137,9 @@ def render_filterable_editor(
                     if search.strip():
                         filters[col] = search.strip()
 
-    # ── Apply Filters ──
-    filtered_df = df.copy()
+    # Set index to id_column so edits track rows regardless of dataset pagination
+    df_indexed = df.set_index(id_column, drop=False)
+    filtered_df = df_indexed.copy()
     for col, filter_val in filters.items():
         if isinstance(filter_val, list):
             filtered_df = filtered_df[filtered_df[col].astype(str).isin(filter_val)]
@@ -142,36 +148,127 @@ def render_filterable_editor(
                 filtered_df[col].astype(str).str.contains(str(filter_val), case=False, na=False)
             ]
 
-    st.caption(f"Showing {len(filtered_df)} of {len(df)} record(s)")
+    st.caption(f"Showing {len(filtered_df)} of {len(df_indexed)} record(s)")
 
-    # ── Editable Table ──
-    edited_df = st.data_editor(
-        filtered_df,
-        use_container_width=True,
-        height=height,
-        num_rows="fixed",
-        disabled=disabled_columns,
-        key=f"{table_key}_editor",
-    )
+    # ── Editable Table Setup ──
+    is_expanded_key = f"{table_key}_is_expanded"
+    global_edits_key = f"{table_key}_global_edits"
+    full_df_key = f"{table_key}_full_df"
 
-    editor_state = st.session_state.get(f"{table_key}_editor", {})
-    edited_rows_dict = editor_state.get("edited_rows", {})
-    
-    if edited_rows_dict:
-        st.markdown("---")
-        with st.expander("📝 Unsaved Changes Preview", expanded=True):
-            for row_idx, changes in edited_rows_dict.items():
+    if global_edits_key not in st.session_state:
+        st.session_state[global_edits_key] = {}
+    global_edits = st.session_state[global_edits_key]
+
+    is_expanded = st.session_state.get(is_expanded_key, False)
+
+    # 1. Prepare UI dataframe by baking global edits into the true original filtered rows
+    df_for_editor = filtered_df.copy()
+    for row_pk, changes in global_edits.items():
+        if row_pk in df_for_editor.index:
+            for col, val in changes.items():
+                if col in df_for_editor.columns:
+                    df_for_editor.loc[row_pk, col] = val
+
+    # Stable editor key — only ONE editor is rendered at a time (if/else)
+    editor_key = f"{table_key}_editor"
+
+    # Expand / Collapse buttons
+    col_btn, _ = st.columns([1, 5])
+    with col_btn:
+        if is_expanded:
+            if st.button("↙️ Collapse Table", key=f"{table_key}_collapse_btn"):
+                st.session_state[is_expanded_key] = False
+                st.rerun()
+        else:
+            if st.button("↗️ Expand Table (All Data)", key=f"{table_key}_expand_btn"):
+                st.session_state[is_expanded_key] = True
+                st.rerun()
+
+    def process_edits(edited_df: pd.DataFrame):
+        """Extract user edits by diffing against the true base dataset."""
+        for idx in edited_df.index:
+            for col in edited_df.columns:
                 try:
-                    row_identifier = filtered_df.iloc[row_idx][id_column]
-                    for col, new_val in changes.items():
-                        orig_val = filtered_df.iloc[row_idx][col]
-                        st.markdown(
-                            f"- **Row ID {row_identifier}** &nbsp;👉&nbsp; `{col}` changed from `{orig_val}` to `{new_val}`"
-                        )
-                except Exception:
-                    pass
+                    orig_val = filtered_df.loc[idx, col]
+                    edit_val = edited_df.loc[idx, col]
+                except KeyError:
+                    continue
+                if pd.isna(orig_val) and pd.isna(edit_val):
+                    continue
+                if str(orig_val) != str(edit_val):
+                    global_edits.setdefault(idx, {})[col] = edit_val
+                else:
+                    # Value was reverted to original — clean up
+                    if idx in global_edits and col in global_edits[idx]:
+                        del global_edits[idx][col]
+                        if not global_edits[idx]:
+                            del global_edits[idx]
 
-    return filtered_df, edited_df
+    if is_expanded:
+        # Cache full dataset for safely restoring edited hidden rows later
+        st.session_state[full_df_key] = filtered_df
+
+        # In-page expanded view — shows full dataset in a tall editor
+        edited_ui_df = st.data_editor(
+            df_for_editor,
+            use_container_width=True,
+            height=min(800, max(400, len(df_for_editor) * 36 + 40)),
+            num_rows="fixed",
+            disabled=disabled_columns,
+            key=f"{editor_key}_exp",
+        )
+        process_edits(edited_ui_df)
+    else:
+        # Normal main table view — paginated
+        edited_ui_df = st.data_editor(
+            df_for_editor,
+            use_container_width=True,
+            height=height,
+            num_rows="fixed",
+            disabled=disabled_columns,
+            key=f"{editor_key}_main",
+        )
+        process_edits(edited_ui_df)
+
+    # 3. Stitch hidden edited rows from total set back so DB saves them
+    final_original_df = filtered_df.copy()
+    final_edited_df = edited_ui_df.copy()
+
+    if global_edits and not is_expanded and full_df_key in st.session_state:
+        full_df = st.session_state[full_df_key]
+        missing_ids = [rid for rid in global_edits if rid not in final_edited_df.index and rid in full_df.index]
+
+        if missing_ids:
+            missing_orig = full_df.loc[missing_ids]
+            final_original_df = pd.concat([final_original_df, missing_orig])
+
+            missing_edited = missing_orig.copy()
+            for rid in missing_ids:
+                if rid in global_edits and global_edits[rid]:
+                    for col, val in global_edits[rid].items():
+                        if col in missing_edited.columns:
+                            missing_edited.loc[rid, col] = val
+            final_edited_df = pd.concat([final_edited_df, missing_edited])
+
+    if global_edits:
+        has_active_edits = any(changes for changes in global_edits.values())
+
+        if has_active_edits:
+            st.markdown("---")
+            with st.expander("📝 Unsaved Changes Preview", expanded=True):
+                for row_id, changes in global_edits.items():
+                    if not changes:
+                        continue
+                    try:
+                        for col, new_val in changes.items():
+                            orig_val = "?"
+                            if row_id in final_original_df.index:
+                                orig_val = final_original_df.loc[row_id, col]
+                            st.markdown(f"- **Row ID {row_id}** &nbsp;👉&nbsp; `{col}` changed from `{orig_val}` to `{new_val}`")
+                    except Exception:
+                        pass
+
+    return final_original_df, final_edited_df
 
 
 def save_table_changes(
