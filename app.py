@@ -221,6 +221,12 @@ st.markdown(
         border-radius: 12px;
         overflow: visible;
     }
+    div[data-testid="stDataFrame"], div[data-testid="stTable"] {
+        width: 100%;
+    }
+    div[data-testid="stDataFrame"] > div, div[data-testid="stTable"] > div {
+        overflow-x: auto;
+    }
 
     /* Expander */
     .streamlit-expanderHeader {
@@ -246,6 +252,75 @@ st.markdown(
     @keyframes fadeInDown {
         from { opacity: 0; transform: translateY(-15px); }
         to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive layout */
+    .block-container {
+        max-width: 1400px;
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+    }
+
+    @media (max-width: 1200px) {
+        .block-container {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .main-header {
+            padding: 1.5rem 1.25rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .main-title {
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+        .main-subtitle {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+        }
+        .metric-card {
+            padding: 1.25rem;
+        }
+        .metric-value {
+            font-size: 2rem;
+        }
+        .metric-label {
+            font-size: 0.75rem;
+        }
+        .stButton > button {
+            width: 100% !important;
+            padding: 0.6rem 1.2rem !important;
+        }
+        section[data-testid="stSidebar"] {
+            width: 18rem !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .main-title {
+            font-size: 1.6rem;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+        }
+        .status-chip {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+        }
+        .stTextInput input, .stSelectbox select, .stDateInput input,
+        .stNumberInput input, .stTextArea textarea {
+            font-size: 0.9rem !important;
+        }
     }
 
     /* Hide Streamlit chrome */
