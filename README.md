@@ -1,55 +1,89 @@
-# IMTool Improved
+# 💍 IMTool Improved
+### Enterprise-Grade Jewellery Inventory & Sales Management System
 
-Streamlit-based inventory and sales management system for a jewellery business. The app combines CRUD workflows for stock, purchases, sales, bookings, customers, and salesmen with an agentic AI page that can answer policy questions or generate read-only SQL against PostgreSQL.
+`IMTool Improved` is a sophisticated Streamlit-based platform designed for high-value inventory management. It seamlessly blends robust CRUD operations with a state-of-the-art **Agentic AI Pipeline** for natural language business intelligence and policy retrieval.
 
-## Main Areas
+---
 
-- `app.py`: app entrypoint, login gate, sidebar, and top-level dashboard metrics.
-- `config/`: central query and prompt registries.
-- `pages/`: Streamlit pages for operational workflows.
-- `agents/`: OpenAI-powered question understanding, SQL generation, data evaluation, and summarisation steps.
-- `utils/`: logging, RAG, safe HTML, and safe path helpers.
-- `knowledge/`: text sources used by the RAG flow.
-- `docs/`: audits, reviews, and structural guidance.
-- `scripts/verification/`: repeatable verification and smoke-test scripts.
-- `system_files/pattern_images/`: repo-local pattern image assets.
-- `logs/`, `staging/`, `__pycache__/`: runtime/generated artifacts that should not be versioned.
+## ✨ Key Features
 
-## Runtime Requirements
+- **🏆 Premium UI/UX**: Custom-designed Cinzel/Outfit aesthetic tailored for luxury retail.
+- **🛡️ Secure Access**: Bcrypt-encrypted authentication with role-aware session gating.
+- **📦 Full CRUD Lifecycle**: Manage Stocks, Sales, Bookings, Purchases, Customers, and Salesmen.
+- **🤖 Agentic Intelligence**: A 4-agent RAG pipeline (Understanding -> SQL -> Eval -> Summary) that turns natural language questions into data-driven insights.
+- **🗄️ ACID Compliance**: Atomic, Consistent, Isolated, Durable database transactions via PostgreSQL connection pooling.
+- **📄 RAG Knowledge**: Built-in retrieval-augmented generation for store policies and operational manuals.
 
-- Python 3.11
-- PostgreSQL credentials in `.streamlit/secrets.toml`
-- OpenAI API credentials in `.streamlit/secrets.toml` or environment variables
-- Packages from `requirements.txt`
+---
 
-Expected Streamlit secrets shape:
+## 🛠️ Tech Stack
 
-- `connections.postgresql`
-- `connections.postgresql_readonly` (optional but recommended)
-- `openai.api_key`
-- `openai.model`
+- **Frontend**: [Streamlit](https://streamlit.io/) with Premium Custom CSS.
+- **Backend/Logic**: Python 3.11 with `psycopg2` for PostgreSQL interaction.
+- **Intelligence**: [OpenAI GPT-4o-mini](https://openai.com/) (Agentic Framework).
+- **Database**: PostgreSQL (with read-only security for AI queries).
+- **Redaction**: Built-in PII redaction for safe LLM interaction.
 
-## Running
+---
 
-Install dependencies and run:
+## 📂 Project Architecture
 
+```
+├── app.py                  # Entry point & Navigation
+├── auth_controller.py      # Security & Session Management
+├── database_manager.py     # Connection Pooling & ACID Logic
+├── agents/                 # 4-Agent AI Pipeline
+│   ├── question_understanding.py
+│   ├── sql_query_agent.py
+│   ├── data_evaluation_agent.py
+│   └── summary_agent.py
+├── utils/                  # Core helpers (RAG, logging, etc.)
+├── knowledge/              # RAG Source Material
+├── config/                 # Query & Prompt Registries
+└── docs/                   # Full System Documentation
+```
+
+> [!TIP]
+> **Detailed Workflow Diagram**: For a deep dive into the function-level logic (Bootstrap, Auth, DB Layer, AI Pipeline), refer to my recently generated workflow diagrams.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Requirements
+- **Python 3.11+**
+- **PostgreSQL** instance with appropriate schema.
+- **OpenAI API Key** (for Agentic features).
+
+### 2. Configuration
+Create a `.streamlit/secrets.toml` file with:
+```toml
+[connections.postgresql]
+host = "..."
+dbname = "..."
+user = "..."
+password = "..."
+schema = "konghin"
+
+[openai]
+api_key = "..."
+model = "gpt-4o-mini"
+```
+
+### 3. Execution
 ```bash
+pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Audit Docs
+---
 
-- `docs/reviews/REPO_AUDIT.md`
-- `docs/reviews/SECURITY_REVIEW.md`
-- `docs/reviews/PERFORMANCE_REVIEW.md`
-- `docs/guides/STRUCTURE_GUIDE.md`
-- `docs/guides/DELETE_CANDIDATES.md`
-- `docs/audit/`
+## 🔍 System Audits & Guides
 
-## Validation
+- **Security**: [SECURITY_REVIEW.md](file:///docs/reviews/SECURITY_REVIEW.md)
+- **Performance**: [PERFORMANCE_REVIEW.md](file:///docs/reviews/PERFORMANCE_REVIEW.md)
+- **Structure**: [STRUCTURE_GUIDE.md](file:///docs/guides/STRUCTURE_GUIDE.md)
+- **Functions**: [PROJECT_DETAILED_DIAGRAM.md](file:///docs/PROJECT_DETAILED_DIAGRAM.md)
 
-No automated test suite is currently present in the repository. Current verification helpers live in `scripts/verification/`. The latest audit changes were validated with:
-
-```bash
-C:\Windows\py.exe -3 -m compileall -q app.py auth_controller.py database_manager.py config_loader.py logging_config.py prompt_config.py utils agents pages
-```
+---
+© 2025 Chop Kong Hin. All rights reserved.
