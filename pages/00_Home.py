@@ -9,7 +9,7 @@ from __future__ import annotations
 import streamlit as st
 from database_manager import DatabaseManager
 from auth_controller import get_current_user
-from logging_config import get_logger
+from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 

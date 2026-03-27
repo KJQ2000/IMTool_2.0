@@ -18,8 +18,7 @@ from typing import Any
 
 from openai import OpenAI
 import streamlit as st
-
-from prompt_config import render_prompt
+from config.prompt_config import render_prompt
 from utils.rag import retrieve_relevant_chunks
 from utils.logging_utils import get_logger
 

@@ -36,9 +36,8 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.pool
 import streamlit as st
-
-from config_loader import get_query, get_sequence_name, get_prefix
-from logging_config import get_logger
+from config.config_loader import get_query, get_sequence_name, get_prefix
+from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 

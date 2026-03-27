@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from database_manager import DatabaseManager
-from logging_config import get_logger
+from config.logging_config import get_logger
 from utils.query_cache import clear_query_caches
 
 logger = get_logger(__name__)

@@ -6,7 +6,7 @@ import pandas as pd
 import streamlit as st
 from auth_controller import require_auth
 from database_manager import DatabaseManager
-from logging_config import get_logger
+from config.logging_config import get_logger
 
 from utils.editable_table import (
     render_filterable_editor,

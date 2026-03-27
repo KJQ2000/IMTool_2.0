@@ -11,7 +11,7 @@ from __future__ import annotations
 import streamlit as st
 from auth_controller import require_auth
 from database_manager import DatabaseManager
-from logging_config import get_logger
+from config.logging_config import get_logger
 from utils.html_utils import escape_html
 
 logger = get_logger(__name__)

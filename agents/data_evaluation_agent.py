@@ -13,8 +13,7 @@ from typing import Any
 
 from openai import OpenAI
 import streamlit as st
-
-from prompt_config import get_prompt
+from config.prompt_config import get_prompt
 from utils.logging_utils import get_logger
 
 logger = get_logger(__name__)

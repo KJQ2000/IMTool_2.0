@@ -13,8 +13,7 @@ Run with:  streamlit run app.py
 from __future__ import annotations
 
 import streamlit as st
-
-from logging_config import configure_logging, get_logger
+from config.logging_config import configure_logging, get_logger
 from utils.html_utils import escape_html
 from utils.log_context import set_log_context
 

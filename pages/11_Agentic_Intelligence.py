@@ -9,7 +9,7 @@ from typing import Any
 import pandas as pd
 import streamlit as st
 from auth_controller import get_current_user, require_auth
-from logging_config import get_logger
+from config.logging_config import get_logger
 from utils.html_utils import format_multiline_html
 from utils.logging_utils import log_context, new_trace_id, set_log_context
 
