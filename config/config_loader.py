@@ -26,7 +26,7 @@ from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-_CONFIG_PATH = Path(__file__).resolve().parent / "config" / "config.yaml"
+_CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
 
 
 @st.cache_data(show_spinner=False)
@@ -39,7 +39,7 @@ def _load_config(config_mtime_ns: int) -> dict:
     if not _CONFIG_PATH.exists():
         raise FileNotFoundError(
             f"Configuration file not found: {_CONFIG_PATH}. "
-            "Ensure config.yaml exists in the project root."
+            "Ensure config.yaml exists in the config/ directory."
         )
 
     with open(_CONFIG_PATH, "r", encoding="utf-8") as f:

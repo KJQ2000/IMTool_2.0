@@ -15,11 +15,11 @@ from typing import Any
 
 import yaml
 
-from logging_config import get_logger
+from config.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-_PROMPTS_PATH = Path(__file__).resolve().parent / "config" / "prompts.yaml"
+_PROMPTS_PATH = Path(__file__).resolve().parent / "prompts.yaml"
 _TOKEN_PATTERN = re.compile(r"\{\{([A-Z0-9_]+)\}\}")
 
 
