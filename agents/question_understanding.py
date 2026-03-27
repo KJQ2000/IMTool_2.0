@@ -18,6 +18,8 @@ from typing import Any
 from openai import OpenAI
 import streamlit as st
 from config.prompt_config import get_prompt
+from utils.ai_redaction import redact_text
+from utils.ai_router import should_force_database
 from utils.rag import retrieve_relevant_chunks
 from utils.logging_utils import get_logger
 
@@ -45,6 +47,16 @@ def run(question: str, chat_history: str = "") -> dict[str, Any]:
     logger.info("[QuestionUnderstandingAgent] Processing: %s", question)
     t0 = time.perf_counter()
 
+    if should_force_database(question):
+        logger.info("[QuestionUnderstandingAgent] Rule-based router forced database mode.")
+        return {
+            "type": "database",
+            "answer": "",
+            "restructured_question": question,
+            "reasoning": "Rule-based router matched database intent.",
+            "policy_sources": [],
+        }
+
     try:
         model = st.secrets["openai"]["model"]
     except (KeyError, FileNotFoundError):
@@ -54,12 +66,15 @@ def run(question: str, chat_history: str = "") -> dict[str, Any]:
     client = _get_client()
     system_prompt = get_prompt("question_understanding_agent.system")
 
+    redacted_question = redact_text(question)
+    redacted_history = redact_text(chat_history)
+
     messages = [
         {"role": "system", "content": system_prompt},
     ]
-    if chat_history:
-        messages.append({"role": "user", "content": f"Previous Conversation:\n{chat_history}"})
-    messages.append({"role": "user", "content": f"User question: {question}"})
+    if redacted_history:
+        messages.append({"role": "user", "content": f"Previous Conversation:\n{redacted_history}"})
+    messages.append({"role": "user", "content": f"User question: {redacted_question}"})
 
     response = client.chat.completions.create(
         model=model, messages=messages, temperature=0.1,

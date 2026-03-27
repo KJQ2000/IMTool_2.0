@@ -1,0 +1,22 @@
+[
+  {"id": "stock_in_stock_count", "question": "How many items are in stock?", "expected_type": "database", "expect_template": "stock_count_in_stock"},
+  {"id": "stock_booked_count", "question": "How many items are booked?", "expected_type": "database", "expect_template": "stock_count_booked"},
+  {"id": "stock_sold_count", "question": "How many items are sold?", "expected_type": "database", "expect_template": "stock_count_sold"},
+  {"id": "sales_revenue_year", "question": "Total sales revenue this year?", "expected_type": "database", "expect_template": "total_sales_revenue"},
+  {"id": "sales_revenue_month", "question": "Total sales revenue this month?", "expected_type": "database", "expect_template": "total_sales_revenue"},
+  {"id": "top_selling_types", "question": "What are the top selling stock types?", "expected_type": "database", "expect_template": "top_selling_types"},
+  {"id": "pending_bookings", "question": "Show pending bookings", "expected_type": "database", "expect_template": "pending_bookings"},
+  {"id": "list_customers", "question": "List all customers", "expected_type": "database", "expect_template": "list_customers"},
+  {"id": "total_booking_value", "question": "Total bookings value", "expected_type": "database", "expect_template": "total_bookings_value"},
+  {"id": "list_sales", "question": "List all sales", "expected_type": "database"},
+  {"id": "purchases_this_month", "question": "Show all purchases this month", "expected_type": "database"},
+  {"id": "refund_policy", "question": "What is your refund policy?", "expected_type": "general"},
+  {"id": "resize_policy", "question": "Do you offer resizing?", "expected_type": "general"},
+  {"id": "completed_bookings", "question": "How many bookings are completed?", "expected_type": "database"},
+  {"id": "bookings_this_month", "question": "Show bookings for this month", "expected_type": "database"},
+  {"id": "profit_year", "question": "Total profit this year", "expected_type": "database"},
+  {"id": "list_salesmen", "question": "List all salesmen", "expected_type": "database"},
+  {"id": "customer_count", "question": "How many customers do we have?", "expected_type": "database"},
+  {"id": "sold_today", "question": "Show all stock items sold today", "expected_type": "database"},
+  {"id": "labor_cost_year", "question": "Total labor cost from sales this year", "expected_type": "database"}
+]

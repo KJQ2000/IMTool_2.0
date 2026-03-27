@@ -134,6 +134,8 @@ def run_pipeline(q):
                 sql_r.get("results", []),
                 sql_r.get("columns", []),
                 chat_history=history_str,
+                sql=sql_r.get("sql"),
+                is_aggregate=bool(sql_r.get("is_aggregate")),
             )
         trace.append({"agent": "Summary", "output": sm})
 

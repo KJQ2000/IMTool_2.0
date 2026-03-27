@@ -14,6 +14,7 @@ from typing import Any
 from openai import OpenAI
 import streamlit as st
 from config.prompt_config import get_prompt
+from utils.ai_redaction import redact_rows, redact_text
 from utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -56,11 +57,14 @@ def run(question: str, sql: str, results: list[dict[str, Any]], columns: list[st
     logger.debug("[DataEvalAgent] Model=%s", model)
 
     system_prompt = get_prompt("data_evaluation_agent.system")
+    redacted_question = redact_text(question)
+    redacted_sql = redact_text(sql)
+    redacted_results = redact_rows(results, columns)
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": (
-            f"User question: {question}\n\nSQL executed:\n{sql}\n\n"
-            f"Database results:\n{_format_results(results, columns)}"
+            f"User question: {redacted_question}\n\nSQL executed:\n{redacted_sql}\n\n"
+            f"Database results:\n{_format_results(redacted_results, columns)}"
         )},
     ]
 

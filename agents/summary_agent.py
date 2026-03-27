@@ -7,6 +7,7 @@ Summary Agent — final stage, synthesises database results with store knowledge
 from __future__ import annotations
 
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,7 @@ from typing import Any
 from openai import OpenAI
 import streamlit as st
 from config.prompt_config import get_prompt
+from utils.ai_redaction import redact_rows, redact_text
 from utils.rag import retrieve_relevant_chunks
 from utils.logging_utils import get_logger
 
@@ -46,7 +48,27 @@ def _format_results(results: list[dict], columns: list[str]) -> str:
     return f"{header}\n{'-' * max(len(header), 30)}\n{rows_str}{suffix}"
 
 
-def run(question: str, results: list[dict[str, Any]], columns: list[str], chat_history: str = "") -> dict[str, Any]:
+def _needs_coverage_note(question: str, sql: str | None, is_aggregate: bool) -> bool:
+    if not is_aggregate:
+        return False
+    q = question.lower()
+    if any(k in q for k in ["today", "yesterday", "this year", "this month", "last", "since", "between"]):
+        return False
+    if re.search(r"\b(date|year|month|day|week|quarter)\b", q):
+        return False
+    if sql and re.search(r"\b(date_trunc|current_date|interval)\b", sql.lower()):
+        return False
+    return True
+
+
+def run(
+    question: str,
+    results: list[dict[str, Any]],
+    columns: list[str],
+    chat_history: str = "",
+    sql: str | None = None,
+    is_aggregate: bool = False,
+) -> dict[str, Any]:
     """Generate the final user-facing answer."""
     logger.info("[SummaryAgent] Generating for: %s", question)
     t0 = time.perf_counter()
@@ -58,16 +80,23 @@ def run(question: str, results: list[dict[str, Any]], columns: list[str], chat_h
     logger.debug("[SummaryAgent] Model=%s results=%d", model, len(results))
 
     system_prompt = get_prompt("summary_agent.system")
+    redacted_question = redact_text(question)
+    redacted_history = redact_text(chat_history)
+    redacted_results = redact_rows(results, columns)
     knowledge_context = retrieve_relevant_chunks(question, _KNOWLEDGE_PATH, top_k=4)
-    db_text = _format_results(results, columns)
+    db_text = _format_results(redacted_results, columns)
+    coverage_note = ""
+    if _needs_coverage_note(question, sql, is_aggregate):
+        coverage_note = "Coverage note: no explicit date range was provided; interpret results as all-time."
 
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": (
-            (f"Previous Conversation:\n{chat_history}\n\n" if chat_history else "") +
-            f"User's question: {question}\n\n"
+            (f"Previous Conversation:\n{redacted_history}\n\n" if redacted_history else "") +
+            f"User's question: {redacted_question}\n\n"
             f"--- Database Results ---\n{db_text}\n\n"
-            f"--- Relevant Store Knowledge ---\n{knowledge_context}"
+            f"--- Relevant Store Knowledge ---\n{knowledge_context}\n\n"
+            f"{coverage_note}"
         )},
     ]
 

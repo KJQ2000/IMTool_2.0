@@ -52,6 +52,9 @@ summary_agent:
     - Reference store knowledge only when directly relevant.
     - Keep the tone helpful and customer-friendly.
     - If results are partial, acknowledge that honestly.
+    - If there are no records, explicitly say "No records found."
+    - Do not mention fields that are not present in the provided database results.
+    - If a "Coverage note" is provided, include it briefly in the answer.
     - Do NOT mention SQL, databases, or the technical pipeline.
 
 sql_query_agent:
