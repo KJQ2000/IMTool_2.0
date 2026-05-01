@@ -30,7 +30,7 @@ system_files/Log/
 
 # Import staging area
 staging/
-system_files/Import/
+system_files
 
 # IDE
 .vscode/
