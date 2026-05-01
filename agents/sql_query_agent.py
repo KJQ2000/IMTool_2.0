@@ -13,25 +13,29 @@ import json
 import os
 import re
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 from openai import OpenAI
 import streamlit as st
-
-from prompt_config import render_prompt
+from config.prompt_config import render_prompt
+from utils.ai_redaction import redact_text
+from utils.sql_templates import match_sql_template
 from utils.rag import retrieve_relevant_chunks
 from utils.logging_utils import get_logger
 
 logger = get_logger(__name__)
 
 _client: OpenAI | None = None
-_README_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "Bilingual README.txt"
+_DATABASE_REFERENCE_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "database_reference.md"
+_SQL_EXAMPLES_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "sql_query_examples.txt"
 _MAX_RETRIES = int(os.getenv("MAX_SQL_RETRIES", "3"))
 
 _KNOWN_TABLES = [
     "booking", "book_payment", "category_pattern_mapping",
     "customer", "purchase", "sale", "salesman", "stock",
+    "users", "metadata",
 ]
 
 
@@ -48,7 +52,7 @@ def _get_client() -> OpenAI:
     return _client
 
 
-def _build_system_prompt(schema_context: str, db_schema: str) -> str:
+def _build_system_prompt(schema_context: str, sql_examples: str, db_schema: str) -> str:
     schema_note = (
         f'- ALWAYS prefix every table name with the schema name: '
         f'"{db_schema}.<table_name>" (e.g. {db_schema}.stock, {db_schema}.sale).\n'
@@ -59,6 +63,7 @@ def _build_system_prompt(schema_context: str, db_schema: str) -> str:
         values={
             "DB_SCHEMA": db_schema,
             "SCHEMA_CONTEXT": schema_context,
+            "SQL_EXAMPLES": sql_examples,
             "SCHEMA_NOTE": schema_note,
         },
     )
@@ -86,10 +91,80 @@ def _sanitise_sql(sql: str) -> str:
 def _apply_schema_prefix(sql: str, db_schema: str) -> str:
     if not db_schema:
         return sql
+        
+    # Temporarily hide string literals to prevent replacing words inside quotes
+    literals = []
+    def literal_replacer(match):
+        literals.append(match.group(0))
+        return f"__LITERAL_{len(literals)-1}__"
+        
+    sql_no_literals = re.sub(r"'[^']*'", literal_replacer, sql)
+    
     for table in _KNOWN_TABLES:
         pattern = rf"(?<![\w.]){re.escape(table)}(?!\w)"
-        sql = re.sub(pattern, f"{db_schema}.{table}", sql, flags=re.IGNORECASE)
-    return sql
+        sql_no_literals = re.sub(pattern, f"{db_schema}.{table}", sql_no_literals, flags=re.IGNORECASE)
+        
+    for i, lit in enumerate(literals):
+        sql_no_literals = sql_no_literals.replace(f"__LITERAL_{i}__", lit)
+        
+    return sql_no_literals
+
+
+@lru_cache(maxsize=1)
+def _load_schema_reference() -> dict[str, set[str]]:
+    tables: dict[str, set[str]] = {}
+    try:
+        text = _DATABASE_REFERENCE_PATH.read_text(encoding="utf-8")
+    except Exception:
+        return tables
+
+    current_table: str | None = None
+    in_columns = False
+    for line in text.splitlines():
+        header = re.match(r"^###\s+`?([a-zA-Z0-9_]+)`?\s*$", line.strip())
+        if header:
+            current_table = header.group(1).strip()
+            tables.setdefault(current_table, set())
+            in_columns = False
+            continue
+        if line.strip().lower().startswith("main columns"):
+            in_columns = True
+            continue
+        if in_columns and line.strip().startswith("-"):
+            col = line.strip().lstrip("-").strip()
+            col = col.strip("`").strip()
+            if current_table and col:
+                tables[current_table].add(col)
+        elif line.strip().startswith("### "):
+            in_columns = False
+    return tables
+
+
+def _validate_sql(sql: str, db_schema: str) -> None:
+    allowed_tables = set(_KNOWN_TABLES)
+    schema_tables = _load_schema_reference()
+    if schema_tables:
+        allowed_tables = set(schema_tables.keys())
+
+    table_refs = re.findall(r"\b(?:FROM|JOIN)\s+([a-zA-Z0-9_.]+)", sql, re.IGNORECASE)
+    for ref in table_refs:
+        table = ref.split(".")[-1]
+        if table not in allowed_tables:
+            raise ValueError(f"Unknown or disallowed table: {table}")
+
+    if not schema_tables:
+        return
+
+    col_refs = re.findall(r"\b([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+)\b", sql)
+    for schema, table, col in col_refs:
+        if schema != db_schema:
+            continue
+        if table not in schema_tables:
+            raise ValueError(f"Unknown table in column reference: {table}")
+        if col == "*":
+            continue
+        if col not in schema_tables[table]:
+            raise ValueError(f"Unknown column {table}.{col}")
 
 
 def run(question: str, chat_history: str = "", previous_feedback: str | None = None) -> dict[str, Any]:
@@ -111,8 +186,13 @@ def run(question: str, chat_history: str = "", previous_feedback: str | None = N
     except (KeyError, FileNotFoundError):
         db_schema = os.getenv("DB_SCHEMA", "konghin")
 
+    use_templates = os.getenv("AI_USE_SQL_TEMPLATES", "true").strip().lower() in {"1", "true", "yes", "y", "on"}
     client = _get_client()
-    schema_context = retrieve_relevant_chunks(question, _README_PATH, top_k=6)
+    try:
+        schema_context = _DATABASE_REFERENCE_PATH.read_text(encoding="utf-8")
+    except Exception:
+        schema_context = "Schema reference not found."
+    sql_examples = retrieve_relevant_chunks(question, _SQL_EXAMPLES_PATH, top_k=5)
 
     # Import here to avoid circular deps
     from database_manager import DatabaseManager
@@ -121,21 +201,45 @@ def run(question: str, chat_history: str = "", previous_feedback: str | None = N
     attempts = 0
     last_error: str | None = None
     generated_sql = ""
+    is_aggregate = False
+
+    if use_templates:
+        templ = match_sql_template(question, db_schema)
+        if templ:
+            generated_sql = templ["sql"]
+            generated_sql = _sanitise_sql(generated_sql)
+            generated_sql = _apply_schema_prefix(generated_sql, db_schema)
+            _validate_sql(generated_sql, db_schema)
+            logger.info("[SQLQueryAgent] Using template %s", templ.get("template_id"))
+            rows, columns = db.execute_readonly_query(generated_sql)
+            return {
+                "sql": generated_sql,
+                "results": rows,
+                "columns": columns,
+                "attempts": 1,
+                "error": None,
+                "template_id": templ.get("template_id"),
+                "is_aggregate": bool(templ.get("is_aggregate")),
+            }
 
     for attempt in range(1, _MAX_RETRIES + 1):
         attempts = attempt
         logger.info("[SQLQueryAgent] Attempt %d/%d", attempt, _MAX_RETRIES)
 
-        user_msg = f"Question: {question}"
-        if chat_history:
-            user_msg = f"Previous Conversation:\n{chat_history}\n\n{user_msg}"
-        if previous_feedback:
-            user_msg += f"\n\nAdditional guidance: {previous_feedback}"
+        redacted_question = redact_text(question)
+        redacted_history = redact_text(chat_history)
+        redacted_feedback = redact_text(previous_feedback or "")
+
+        user_msg = f"Question: {redacted_question}"
+        if redacted_history:
+            user_msg = f"Previous Conversation:\n{redacted_history}\n\n{user_msg}"
+        if redacted_feedback:
+            user_msg += f"\n\nAdditional guidance: {redacted_feedback}"
         if attempt > 1 and last_error:
             user_msg += f"\n\nPrevious error: {last_error}. Please fix the query."
 
         messages = [
-            {"role": "system", "content": _build_system_prompt(schema_context, db_schema)},
+            {"role": "system", "content": _build_system_prompt(schema_context, sql_examples, db_schema)},
             {"role": "user", "content": user_msg},
         ]
 
@@ -154,6 +258,8 @@ def run(question: str, chat_history: str = "", previous_feedback: str | None = N
 
             generated_sql = _sanitise_sql(generated_sql)
             generated_sql = _apply_schema_prefix(generated_sql, db_schema)
+            _validate_sql(generated_sql, db_schema)
+            is_aggregate = bool(re.search(r"\b(COUNT|SUM|AVG|MIN|MAX)\b", generated_sql, re.IGNORECASE))
             logger.info("[SQLQueryAgent] SQL: %s", generated_sql)
 
             # Execute via read-only connection
@@ -170,6 +276,7 @@ def run(question: str, chat_history: str = "", previous_feedback: str | None = N
                 return {
                     "sql": generated_sql, "results": rows,
                     "columns": columns, "attempts": attempts, "error": None,
+                    "is_aggregate": is_aggregate,
                 }
             else:
                 last_error = "Query returned 0 rows."
@@ -190,4 +297,5 @@ def run(question: str, chat_history: str = "", previous_feedback: str | None = N
     return {
         "sql": generated_sql, "results": [], "columns": [],
         "attempts": attempts, "error": last_error or "No results after max retries.",
+        "is_aggregate": is_aggregate,
     }

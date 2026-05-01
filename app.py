@@ -13,8 +13,7 @@ Run with:  streamlit run app.py
 from __future__ import annotations
 
 import streamlit as st
-
-from logging_config import configure_logging, get_logger
+from config.logging_config import configure_logging, get_logger
 from utils.html_utils import escape_html
 from utils.log_context import set_log_context
 
@@ -189,6 +188,11 @@ st.markdown(
     section[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] h4 {
         color: var(--primary-navy) !important;
     }
+    
+    /* Ensure sidebar buttons keep their white text instead of inheriting the navy p tag color */
+    section[data-testid="stSidebar"] [data-testid="stButton"] [data-testid="stMarkdownContainer"] p {
+        color: #FFFFFF !important;
+    }
     .sidebar-user {
         color: var(--text-muted) !important;
         font-size: 0.85rem;
@@ -214,7 +218,13 @@ st.markdown(
     .stDataFrame {
         border: 1px solid var(--border-color);
         border-radius: 12px;
-        overflow: hidden;
+        overflow: visible;
+    }
+    div[data-testid="stDataFrame"], div[data-testid="stTable"] {
+        width: 100%;
+    }
+    div[data-testid="stDataFrame"] > div, div[data-testid="stTable"] > div {
+        overflow-x: auto;
     }
 
     /* Expander */
@@ -241,6 +251,75 @@ st.markdown(
     @keyframes fadeInDown {
         from { opacity: 0; transform: translateY(-15px); }
         to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive layout */
+    .block-container {
+        max-width: 1400px;
+        padding-top: 1.5rem;
+        padding-bottom: 2rem;
+        padding-left: 2.5rem;
+        padding-right: 2.5rem;
+    }
+
+    @media (max-width: 1200px) {
+        .block-container {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .block-container {
+            padding-top: 1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        .main-header {
+            padding: 1.5rem 1.25rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .main-title {
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+        .main-subtitle {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+        }
+        .metric-card {
+            padding: 1.25rem;
+        }
+        .metric-value {
+            font-size: 2rem;
+        }
+        .metric-label {
+            font-size: 0.75rem;
+        }
+        .stButton > button {
+            width: 100% !important;
+            padding: 0.6rem 1.2rem !important;
+        }
+        section[data-testid="stSidebar"] {
+            width: 18rem !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .main-title {
+            font-size: 1.6rem;
+        }
+        .metric-value {
+            font-size: 1.8rem;
+        }
+        .status-chip {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
+        }
+        .stTextInput input, .stSelectbox select, .stDateInput input,
+        .stNumberInput input, .stTextArea textarea {
+            font-size: 0.9rem !important;
+        }
     }
 
     /* Hide Streamlit chrome */
@@ -303,82 +382,31 @@ with st.sidebar:
     )
 
 # ──────────────────────────────────────────────────────────
-# Main Dashboard (Home Page)
+# Application Routing
 # ──────────────────────────────────────────────────────────
-st.markdown(
-    """
-    <div class="main-header">
-        <img src="https://chopkonghin.com/cdn/shop/files/logo.png?v=1759327714&width=3840" style="max-height: 100px; margin-bottom: 1.5rem;">
-        <div class="main-title">ENTERPRISE INVENTORY</div>
-        <div class="main-subtitle">Management System</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+pages = {
+    "Dashboards": [
+        st.Page("pages/00_Home.py", title="Home", icon="🏠"),
+        st.Page("pages/01_Dashboard.py", title="Pattern Dashboard", icon="🏠"),
+    ],
+    "Inventory & Sales": [
+        st.Page("pages/03_Stocks.py", title="Stocks", icon="📦"),
+        st.Page("pages/04_Sales.py", title="Sales", icon="💰"),
+        st.Page("pages/06_Bookings.py", title="Bookings", icon="📖"),
+        st.Page("pages/05_Purchases.py", title="Purchases", icon="📋"),
+    ],
+    "Relations": [
+        st.Page("pages/07_Customers.py", title="Customers", icon="👥"),
+        st.Page("pages/08_Salesmen.py", title="Salesmen", icon="🤝"),
+    ],
+    "Tools": [
+         st.Page("pages/02_Pattern_Management.py", title="Pattern Management", icon="🎨"),
+         st.Page("pages/09_Batch_Import.py", title="Batch Import", icon="📥"),
+         st.Page("pages/10_Barcode.py", title="Barcode", icon="🏷️"),
+         st.Page("pages/11_Agentic_Intelligence.py", title="Agentic Intelligence", icon="🤖"),
+         st.Page("pages/12_Custom_Table.py", title="Custom Stock Table", icon="🧩"),
+    ]
+}
 
-logger.info("Dashboard loaded for user: %s", get_current_user())
-
-# Dashboard metrics
-try:
-    db = DatabaseManager.get_instance()
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    # Stock count
-    in_stock = db.fetch_scalar("stock.count_by_status", ("IN STOCK",)) or 0
-    with col1:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(in_stock)}</div>
-                <div class="metric-label">📦 Items In Stock</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # Sold items
-    sold_items = db.fetch_scalar("stock.count_by_status", ("SOLD",)) or 0
-    with col2:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(sold_items)}</div>
-                <div class="metric-label">💰 Items Sold</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # Booked items
-    booked_items = db.fetch_scalar("stock.count_by_status", ("BOOKED",)) or 0
-    with col3:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(booked_items)}</div>
-                <div class="metric-label">📖 Items Booked</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    # Customers
-    customers = db.fetch_scalar("customer.count_all") or 0
-    with col4:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-                <div class="metric-value">{int(customers)}</div>
-                <div class="metric-label">👥 Customers</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.info("👈 Use the sidebar to navigate between modules: Stocks, Sales, Purchases, Bookings, Customers, Salesmen, and Agentic Intelligence.")
-
-except Exception as e:
-    st.warning("⚠️ Unable to load dashboard metrics. Please check your database connection.")
-    logger.error("Dashboard metrics failed: %s", e, exc_info=True)
+pg = st.navigation(pages)
+pg.run()

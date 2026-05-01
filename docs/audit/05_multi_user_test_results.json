@@ -1,0 +1,361 @@
+{
+  "tested_at": "2026-03-24 11:24:24",
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "ResearchDatabase_11Dec",
+    "schema": "konghin",
+    "pool_minconn": 2,
+    "pool_maxconn": 10
+  },
+  "dataset_snapshot": {
+    "users": 1,
+    "customer": 6,
+    "stock": 752,
+    "sale": 19,
+    "booking": 26,
+    "purchase": 1033,
+    "stock_in_stock": 712,
+    "bcrypt_users": 0
+  },
+  "auth_login_probe": {
+    "selected_user": {
+      "usr_id": "asd",
+      "usr_email": "kjunqiang@gmail.com",
+      "password_mode": "plaintext_or_unknown"
+    },
+    "runs": [
+      {
+        "concurrency": 1,
+        "iterations_per_thread": 2,
+        "requests": 2,
+        "successes": 2,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 0.81,
+        "latency": {
+          "avg_ms": 0.17,
+          "min_ms": 0.13,
+          "max_ms": 0.21,
+          "p50_ms": 0.13,
+          "p95_ms": 0.21
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      },
+      {
+        "concurrency": 5,
+        "iterations_per_thread": 2,
+        "requests": 10,
+        "successes": 10,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 131.12,
+        "latency": {
+          "avg_ms": 64.71,
+          "min_ms": 0.32,
+          "max_ms": 130.1,
+          "p50_ms": 0.57,
+          "p95_ms": 130.1
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      },
+      {
+        "concurrency": 10,
+        "iterations_per_thread": 2,
+        "requests": 20,
+        "successes": 20,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 350.35,
+        "latency": {
+          "avg_ms": 174.14,
+          "min_ms": 0.26,
+          "max_ms": 348.85,
+          "p50_ms": 347.28,
+          "p95_ms": 347.62
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      },
+      {
+        "concurrency": 15,
+        "iterations_per_thread": 2,
+        "requests": 30,
+        "successes": 23,
+        "errors": 7,
+        "error_samples": [
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted"
+        ],
+        "wall_ms": 477.68,
+        "latency": {
+          "avg_ms": 241.92,
+          "min_ms": 0.34,
+          "max_ms": 475.28,
+          "p50_ms": 344.7,
+          "p95_ms": 473.74
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      }
+    ]
+  },
+  "stock_fetch_all_probe": {
+    "runs": [
+      {
+        "concurrency": 1,
+        "iterations_per_thread": 1,
+        "requests": 1,
+        "successes": 1,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 11.57,
+        "latency": {
+          "avg_ms": 11.38,
+          "min_ms": 11.38,
+          "max_ms": 11.38,
+          "p50_ms": 11.38,
+          "p95_ms": 11.38
+        },
+        "result_samples": [
+          {
+            "rows": 752
+          }
+        ]
+      },
+      {
+        "concurrency": 5,
+        "iterations_per_thread": 1,
+        "requests": 5,
+        "successes": 5,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 141.08,
+        "latency": {
+          "avg_ms": 132.46,
+          "min_ms": 129.54,
+          "max_ms": 140.44,
+          "p50_ms": 130.65,
+          "p95_ms": 140.44
+        },
+        "result_samples": [
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          }
+        ]
+      },
+      {
+        "concurrency": 10,
+        "iterations_per_thread": 1,
+        "requests": 10,
+        "successes": 10,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 364.91,
+        "latency": {
+          "avg_ms": 356.49,
+          "min_ms": 348.93,
+          "max_ms": 363.27,
+          "p50_ms": 356.85,
+          "p95_ms": 363.27
+        },
+        "result_samples": [
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          }
+        ]
+      },
+      {
+        "concurrency": 15,
+        "iterations_per_thread": 1,
+        "requests": 15,
+        "successes": 10,
+        "errors": 5,
+        "error_samples": [
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted"
+        ],
+        "wall_ms": 461.96,
+        "latency": {
+          "avg_ms": 452.36,
+          "min_ms": 445.0,
+          "max_ms": 460.48,
+          "p50_ms": 447.59,
+          "p95_ms": 460.48
+        },
+        "result_samples": [
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          },
+          {
+            "rows": 752
+          }
+        ]
+      }
+    ]
+  },
+  "pool_exhaustion_probe": {
+    "hold_seconds": 2.0,
+    "runs": [
+      {
+        "concurrency": 5,
+        "iterations_per_thread": 1,
+        "requests": 5,
+        "successes": 5,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 2142.87,
+        "latency": {
+          "avg_ms": 2060.81,
+          "min_ms": 2010.48,
+          "max_ms": 2142.17,
+          "p50_ms": 2046.48,
+          "p95_ms": 2142.17
+        },
+        "result_samples": []
+      },
+      {
+        "concurrency": 10,
+        "iterations_per_thread": 1,
+        "requests": 10,
+        "successes": 10,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 2349.8,
+        "latency": {
+          "avg_ms": 2162.87,
+          "min_ms": 2001.16,
+          "max_ms": 2347.98,
+          "p50_ms": 2141.51,
+          "p95_ms": 2347.98
+        },
+        "result_samples": []
+      },
+      {
+        "concurrency": 15,
+        "iterations_per_thread": 1,
+        "requests": 15,
+        "successes": 10,
+        "errors": 5,
+        "error_samples": [
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted",
+          "connection pool exhausted"
+        ],
+        "wall_ms": 2399.73,
+        "latency": {
+          "avg_ms": 2191.7,
+          "min_ms": 2000.79,
+          "max_ms": 2397.63,
+          "p50_ms": 2169.68,
+          "p95_ms": 2397.63
+        },
+        "result_samples": []
+      }
+    ]
+  },
+  "lost_update_probe": {
+    "customer_id": "CUST_100001",
+    "token_a_committed": false,
+    "token_b_committed": true,
+    "final_value": "No 18, Jalan Harmoni 8, Taman Harmoni, 84900, Tangkak, Johor. [CONCURRENCY_TEST_B]",
+    "restored_original_value": true,
+    "errors": [],
+    "writer_a_ms": 1503.16,
+    "writer_b_ms": 1502.53
+  }
+}

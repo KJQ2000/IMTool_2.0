@@ -25,3 +25,10 @@ scikit-learn
 
 # Environment
 python-dotenv
+
+# Image Processing
+ultralytics
+rembg[cpu]
+onnxruntime
+opencv-python-headless
+pillow

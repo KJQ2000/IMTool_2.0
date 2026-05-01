@@ -20,9 +20,8 @@ from __future__ import annotations
 
 import bcrypt
 import streamlit as st
-
-from config_loader import get_query
-from logging_config import get_logger
+from config.config_loader import get_query
+from config.logging_config import get_logger
 from utils.log_context import set_log_context
 
 logger = get_logger(__name__)

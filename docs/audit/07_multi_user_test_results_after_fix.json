@@ -1,0 +1,427 @@
+{
+  "tested_at": "2026-03-24 11:41:44",
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "dbname": "ResearchDatabase_11Dec",
+    "schema": "konghin",
+    "pool_minconn": 2,
+    "pool_maxconn": 20,
+    "pool_wait_timeout_s": 5.0
+  },
+  "dataset_snapshot": {
+    "users": 1,
+    "customer": 6,
+    "stock": 752,
+    "sale": 19,
+    "booking": 26,
+    "purchase": 1033,
+    "stock_in_stock": 712,
+    "bcrypt_users": 0
+  },
+  "auth_login_probe": {
+    "selected_user": {
+      "usr_id": "asd",
+      "usr_email": "kjunqiang@gmail.com",
+      "password_mode": "plaintext_or_unknown"
+    },
+    "runs": [
+      {
+        "concurrency": 1,
+        "iterations_per_thread": 2,
+        "requests": 2,
+        "successes": 2,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 0.89,
+        "latency": {
+          "avg_ms": 0.18,
+          "min_ms": 0.13,
+          "max_ms": 0.22,
+          "p50_ms": 0.13,
+          "p95_ms": 0.22
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      },
+      {
+        "concurrency": 5,
+        "iterations_per_thread": 2,
+        "requests": 10,
+        "successes": 10,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 161.41,
+        "latency": {
+          "avg_ms": 79.92,
+          "min_ms": 0.26,
+          "max_ms": 160.39,
+          "p50_ms": 0.53,
+          "p95_ms": 160.39
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      },
+      {
+        "concurrency": 10,
+        "iterations_per_thread": 2,
+        "requests": 20,
+        "successes": 20,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 731.25,
+        "latency": {
+          "avg_ms": 364.27,
+          "min_ms": 1.27,
+          "max_ms": 727.87,
+          "p50_ms": 372.9,
+          "p95_ms": 373.09
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      },
+      {
+        "concurrency": 20,
+        "iterations_per_thread": 2,
+        "requests": 40,
+        "successes": 40,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 1239.63,
+        "latency": {
+          "avg_ms": 595.26,
+          "min_ms": 47.8,
+          "max_ms": 1187.65,
+          "p50_ms": 950.66,
+          "p95_ms": 1187.59
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      },
+      {
+        "concurrency": 25,
+        "iterations_per_thread": 2,
+        "requests": 50,
+        "successes": 50,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 1731.41,
+        "latency": {
+          "avg_ms": 797.82,
+          "min_ms": 98.36,
+          "max_ms": 1628.68,
+          "p50_ms": 584.36,
+          "p95_ms": 1628.55
+        },
+        "result_samples": [
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          },
+          {
+            "email_found": true
+          }
+        ]
+      }
+    ]
+  },
+  "stock_page_probe": {
+    "runs": [
+      {
+        "concurrency": 1,
+        "iterations_per_thread": 1,
+        "requests": 1,
+        "successes": 1,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 2.54,
+        "latency": {
+          "avg_ms": 2.36,
+          "min_ms": 2.36,
+          "max_ms": 2.36,
+          "p50_ms": 2.36,
+          "p95_ms": 2.36
+        },
+        "result_samples": [
+          {
+            "rows": 50
+          }
+        ]
+      },
+      {
+        "concurrency": 5,
+        "iterations_per_thread": 1,
+        "requests": 5,
+        "successes": 5,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 136.66,
+        "latency": {
+          "avg_ms": 133.96,
+          "min_ms": 133.45,
+          "max_ms": 135.83,
+          "p50_ms": 133.5,
+          "p95_ms": 135.83
+        },
+        "result_samples": [
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          }
+        ]
+      },
+      {
+        "concurrency": 10,
+        "iterations_per_thread": 1,
+        "requests": 10,
+        "successes": 10,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 373.38,
+        "latency": {
+          "avg_ms": 369.87,
+          "min_ms": 369.35,
+          "max_ms": 371.97,
+          "p50_ms": 369.61,
+          "p95_ms": 371.97
+        },
+        "result_samples": [
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          }
+        ]
+      },
+      {
+        "concurrency": 20,
+        "iterations_per_thread": 1,
+        "requests": 20,
+        "successes": 20,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 1094.56,
+        "latency": {
+          "avg_ms": 1090.81,
+          "min_ms": 1089.79,
+          "max_ms": 1092.48,
+          "p50_ms": 1090.83,
+          "p95_ms": 1091.65
+        },
+        "result_samples": [
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          }
+        ]
+      },
+      {
+        "concurrency": 25,
+        "iterations_per_thread": 1,
+        "requests": 25,
+        "successes": 25,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 1041.63,
+        "latency": {
+          "avg_ms": 867.23,
+          "min_ms": 823.44,
+          "max_ms": 1038.3,
+          "p50_ms": 825.13,
+          "p95_ms": 1035.97
+        },
+        "result_samples": [
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          },
+          {
+            "rows": 50
+          }
+        ]
+      }
+    ]
+  },
+  "pool_exhaustion_probe": {
+    "hold_seconds": 2.0,
+    "runs": [
+      {
+        "concurrency": 5,
+        "iterations_per_thread": 1,
+        "requests": 5,
+        "successes": 5,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 2148.1,
+        "latency": {
+          "avg_ms": 2059.86,
+          "min_ms": 2002.89,
+          "max_ms": 2147.34,
+          "p50_ms": 2051.76,
+          "p95_ms": 2147.34
+        },
+        "result_samples": []
+      },
+      {
+        "concurrency": 10,
+        "iterations_per_thread": 1,
+        "requests": 10,
+        "successes": 10,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 2384.44,
+        "latency": {
+          "avg_ms": 2176.18,
+          "min_ms": 2000.95,
+          "max_ms": 2382.27,
+          "p50_ms": 2160.31,
+          "p95_ms": 2382.27
+        },
+        "result_samples": []
+      },
+      {
+        "concurrency": 20,
+        "iterations_per_thread": 1,
+        "requests": 20,
+        "successes": 20,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 2848.55,
+        "latency": {
+          "avg_ms": 2407.29,
+          "min_ms": 2004.15,
+          "max_ms": 2845.83,
+          "p50_ms": 2438.52,
+          "p95_ms": 2795.1
+        },
+        "result_samples": []
+      },
+      {
+        "concurrency": 25,
+        "iterations_per_thread": 1,
+        "requests": 25,
+        "successes": 25,
+        "errors": 0,
+        "error_samples": [],
+        "wall_ms": 4182.74,
+        "latency": {
+          "avg_ms": 2742.81,
+          "min_ms": 2008.76,
+          "max_ms": 4179.19,
+          "p50_ms": 2518.56,
+          "p95_ms": 4124.15
+        },
+        "result_samples": []
+      }
+    ]
+  },
+  "lost_update_probe": {
+    "customer_id": "CUST_100001",
+    "token_a_committed": true,
+    "token_b_committed": false,
+    "final_value": "No 18, Jalan Harmoni 8, Taman Harmoni, 84900, Tangkak, Johor. [CONCURRENCY_TEST_A]",
+    "restored_original_value": true,
+    "errors": [],
+    "writer_a_ms": 1503.71,
+    "writer_b_conflict": true
+  }
+}

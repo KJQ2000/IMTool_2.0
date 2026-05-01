@@ -1,0 +1,405 @@
+====== EXAMPLE 01: COUNT CURRENT IN-STOCK ITEMS ======
+User question:
+How many items are currently in stock?
+SQL:
+SELECT COUNT(*) AS in_stock_count
+FROM konghin.stock
+WHERE stk_status = 'IN STOCK';
+Reasoning:
+Use the stock table and filter on the current availability status.
+
+====== EXAMPLE 02: LIST CURRENTLY BOOKED STOCK ITEMS ======
+User question:
+Show all items that are currently booked.
+SQL:
+SELECT
+    stk_id,
+    stk_type,
+    stk_pattern,
+    stk_weight,
+    stk_book_id,
+    stk_last_update
+FROM konghin.stock
+WHERE stk_status = 'BOOKED'
+ORDER BY stk_last_update DESC NULLS LAST, stk_id DESC;
+Reasoning:
+Booked stock is stored directly in the stock table with status BOOKED.
+
+====== EXAMPLE 03: COUNT STOCK BY STATUS ======
+User question:
+Give me the stock count by status.
+SQL:
+SELECT
+    COALESCE(stk_status, 'UNKNOWN') AS stock_status,
+    COUNT(*) AS item_count
+FROM konghin.stock
+GROUP BY COALESCE(stk_status, 'UNKNOWN')
+ORDER BY item_count DESC, stock_status;
+Reasoning:
+This groups the stock table by status and counts rows in each group.
+
+====== EXAMPLE 04: TOP SELLING STOCK TYPES ======
+User question:
+What are the top selling stock types?
+SQL:
+SELECT
+    COALESCE(stk_type, 'UNKNOWN') AS stock_type,
+    COUNT(*) AS sold_item_count,
+    ROUND(COALESCE(SUM(stk_profit), 0)::numeric, 2) AS total_profit_rm
+FROM konghin.stock
+WHERE stk_status = 'SOLD'
+GROUP BY COALESCE(stk_type, 'UNKNOWN')
+ORDER BY sold_item_count DESC, total_profit_rm DESC;
+Reasoning:
+Each sold stock row represents one sold item, so stock is the best source.
+
+====== EXAMPLE 05: TOTAL SALES REVENUE THIS YEAR ======
+User question:
+What is the total sales revenue this year?
+SQL:
+SELECT
+    COUNT(*) AS sale_count,
+    ROUND(COALESCE(SUM(sale_price), 0)::numeric, 2) AS total_sales_revenue_rm
+FROM konghin.sale
+WHERE sale_sold_date >= DATE_TRUNC('year', CURRENT_DATE)::date
+  AND sale_sold_date < (DATE_TRUNC('year', CURRENT_DATE) + INTERVAL '1 year')::date;
+Reasoning:
+The sale table stores header-level total sale_price values and sale dates.
+
+====== EXAMPLE 06: MONTHLY SALES THIS YEAR ======
+User question:
+Show me monthly sales totals for this year.
+SQL:
+SELECT
+    TO_CHAR(DATE_TRUNC('month', sale_sold_date), 'YYYY-MM') AS sale_month,
+    COUNT(*) AS sale_count,
+    ROUND(COALESCE(SUM(sale_price), 0)::numeric, 2) AS total_sales_rm
+FROM konghin.sale
+WHERE sale_sold_date >= DATE_TRUNC('year', CURRENT_DATE)::date
+  AND sale_sold_date < (DATE_TRUNC('year', CURRENT_DATE) + INTERVAL '1 year')::date
+GROUP BY DATE_TRUNC('month', sale_sold_date)
+ORDER BY DATE_TRUNC('month', sale_sold_date)
+LIMIT 12;
+Reasoning:
+Bucket sales by month using DATE_TRUNC on the sold date.
+
+====== EXAMPLE 07: PENDING BOOKINGS WITH REMAINING BALANCE ======
+User question:
+Show pending bookings that still have remaining balance.
+SQL:
+SELECT
+    book_id,
+    book_cust_id,
+    book_receipt_no,
+    book_date,
+    book_price,
+    book_remaining,
+    book_status
+FROM konghin.booking
+WHERE book_status = 'BOOKED'
+  AND COALESCE(book_remaining, 0) > 0
+ORDER BY book_date DESC NULLS LAST, book_id DESC;
+Reasoning:
+The booking table already stores the remaining balance and status.
+
+====== EXAMPLE 08: BOOKING PAYMENT SUMMARY ======
+User question:
+Show the payment summary for each booking.
+SQL:
+SELECT
+    b.book_id,
+    b.book_cust_id,
+    b.book_price,
+    b.book_remaining,
+    ROUND(COALESCE(SUM(bp.bp_payment), 0)::numeric, 2) AS total_paid_rm
+FROM konghin.booking b
+LEFT JOIN konghin.book_payment bp
+    ON bp.bp_book_id = b.book_id
+GROUP BY
+    b.book_id,
+    b.book_cust_id,
+    b.book_price,
+    b.book_remaining,
+    b.book_date
+ORDER BY b.book_date DESC NULLS LAST, b.book_id DESC;
+Reasoning:
+Join booking to book_payment and aggregate payment amounts by booking.
+
+====== EXAMPLE 09: SALES HISTORY FOR A CUSTOMER ======
+User question:
+Show all sales for customer CUST_100001.
+SQL:
+SELECT
+    s.sale_id,
+    s.sale_receipt_no,
+    s.sale_sold_date,
+    s.sale_price,
+    s.sale_weight,
+    c.cust_id,
+    c.cust_name
+FROM konghin.sale s
+LEFT JOIN konghin.customer c
+    ON c.cust_id = s.sale_cust_id
+WHERE s.sale_cust_id = 'CUST_100001'
+ORDER BY s.sale_sold_date DESC NULLS LAST, s.sale_id DESC;
+Reasoning:
+The sale header links to the customer through sale_cust_id.
+
+====== EXAMPLE 10: STOCK ITEMS INSIDE A SALE ======
+User question:
+List all stock items inside sale SALE_100001.
+SQL:
+SELECT
+    stk_id,
+    stk_type,
+    stk_pattern,
+    stk_weight,
+    stk_weight_sell,
+    stk_gold_sell,
+    stk_labor_sell,
+    stk_profit
+FROM konghin.stock
+WHERE stk_sale_id = 'SALE_100001'
+ORDER BY stk_id;
+Reasoning:
+Stock rows keep the foreign key-like link to the sale header.
+
+====== EXAMPLE 11: STOCK ITEMS INSIDE A BOOKING ======
+User question:
+List all stock items inside booking BOOK_100001.
+SQL:
+SELECT
+    stk_id,
+    stk_type,
+    stk_pattern,
+    stk_weight,
+    stk_weight_book,
+    stk_gold_book,
+    stk_labor_book,
+    stk_book_price
+FROM konghin.stock
+WHERE stk_book_id = 'BOOK_100001'
+ORDER BY stk_id;
+Reasoning:
+Booked stock rows keep booking-specific pricing fields directly on stock.
+
+====== EXAMPLE 12: UNPRINTED BARCODE CANDIDATES ======
+User question:
+Show stock items that have not been printed for barcode export yet.
+SQL:
+SELECT
+    stk_id,
+    stk_barcode,
+    stk_type,
+    stk_pattern,
+    stk_printed,
+    stk_created_at
+FROM konghin.stock
+WHERE COALESCE(stk_status, '') = 'IN STOCK'
+  AND COALESCE(NULLIF(TRIM(CAST(stk_printed AS TEXT)), ''), '0') IN ('0', 'FALSE', 'false')
+ORDER BY stk_created_at DESC NULLS LAST, stk_id DESC;
+Reasoning:
+The stock table stores both barcode and print-state fields.
+
+====== EXAMPLE 13: PURCHASE TOTALS BY PAYMENT STATUS ======
+User question:
+Give me purchase totals by payment status.
+SQL:
+SELECT
+    COALESCE(pur_payment_status, 'UNKNOWN') AS payment_status,
+    COUNT(*) AS purchase_count,
+    ROUND(COALESCE(SUM(pur_total_amt), 0)::numeric, 2) AS total_purchase_rm
+FROM konghin.purchase
+GROUP BY COALESCE(pur_payment_status, 'UNKNOWN')
+ORDER BY purchase_count DESC, total_purchase_rm DESC;
+Reasoning:
+Purchase payment state and totals are stored in the purchase header.
+
+====== EXAMPLE 14: RECENT PURCHASES WITH SUPPLIER NAME ======
+User question:
+Show recent purchases together with supplier or salesman name.
+SQL:
+SELECT
+    p.pur_id,
+    p.pur_code,
+    p.pur_date,
+    p.pur_total_amt,
+    p.pur_payment_status,
+    s.slm_id,
+    s.slm_name,
+    s.slm_company_name
+FROM konghin.purchase p
+LEFT JOIN konghin.salesman s
+    ON s.slm_id = p.pur_slm_id
+ORDER BY p.pur_date DESC NULLS LAST, p.pur_id DESC;
+Reasoning:
+Join purchase to salesman using pur_slm_id to retrieve supplier details.
+
+====== EXAMPLE 15: STOCK ITEMS FROM A PURCHASE CODE ======
+User question:
+Show all stock items from purchase code PUR-CODE-001.
+SQL:
+SELECT
+    st.stk_id,
+    st.stk_type,
+    st.stk_pattern,
+    st.stk_status,
+    p.pur_code,
+    p.pur_date
+FROM konghin.stock st
+JOIN konghin.purchase p
+    ON p.pur_id = st.stk_pur_id
+WHERE p.pur_code = 'PUR-CODE-001'
+ORDER BY st.stk_id;
+Reasoning:
+The stock row links to purchase by stk_pur_id, while business users often know the purchase code.
+
+====== EXAMPLE 16: MOST COMMON STOCK PATTERNS ======
+User question:
+What are the most common stock patterns?
+SQL:
+SELECT
+    COALESCE(stk_pattern, 'UNKNOWN') AS pattern_name,
+    COUNT(*) AS item_count
+FROM konghin.stock
+GROUP BY COALESCE(stk_pattern, 'UNKNOWN')
+ORDER BY item_count DESC, pattern_name;
+Reasoning:
+Pattern popularity can be measured directly from stock rows.
+
+====== EXAMPLE 17: AVAILABLE STOCK FOR A TYPE AND PATTERN ======
+User question:
+Show available ring items with pattern DRAGON.
+SQL:
+SELECT
+    stk_id,
+    stk_type,
+    stk_pattern,
+    stk_weight,
+    stk_gold_type,
+    stk_gold_cost,
+    stk_labor_cost
+FROM konghin.stock
+WHERE stk_status = 'IN STOCK'
+  AND stk_type = 'RING'
+  AND COALESCE(stk_pattern, '') ILIKE '%DRAGON%'
+ORDER BY stk_created_at DESC NULLS LAST, stk_id DESC;
+Reasoning:
+Use stock when the user asks for currently available items and filter on both type and pattern.
+
+====== EXAMPLE 18: SOLD STOCK PROFIT THIS MONTH ======
+User question:
+Show profit by sold stock item for this month.
+SQL:
+SELECT
+    stk_id,
+    stk_type,
+    stk_pattern,
+    stk_sell_date,
+    ROUND(COALESCE(stk_profit, 0)::numeric, 2) AS profit_rm
+FROM konghin.stock
+WHERE stk_status = 'SOLD'
+  AND stk_sell_date >= DATE_TRUNC('month', CURRENT_DATE)::date
+  AND stk_sell_date < (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month')::date
+ORDER BY stk_profit DESC NULLS LAST, stk_id DESC;
+Reasoning:
+Profit is stored per sold stock row, so stock is better than sale for item-level profit.
+
+====== EXAMPLE 19: SALES WITH OFFICIAL RECEIPT ======
+User question:
+Show sales that have an official receipt.
+SQL:
+SELECT
+    sale_id,
+    sale_receipt_no,
+    sale_sold_date,
+    sale_price,
+    sale_official_receipt
+FROM konghin.sale
+WHERE COALESCE(sale_official_receipt, 0) = 1
+ORDER BY sale_sold_date DESC NULLS LAST, sale_id DESC;
+Reasoning:
+The official receipt flag is stored on the sale header.
+
+====== EXAMPLE 20: SUPPLIERS WITH THE MOST PURCHASES ======
+User question:
+Which suppliers or salesmen have the most purchases?
+SQL:
+SELECT
+    s.slm_id,
+    s.slm_name,
+    s.slm_company_name,
+    COUNT(p.pur_id) AS purchase_count,
+    ROUND(COALESCE(SUM(p.pur_total_amt), 0)::numeric, 2) AS total_purchase_rm
+FROM konghin.salesman s
+LEFT JOIN konghin.purchase p
+    ON p.pur_slm_id = s.slm_id
+GROUP BY s.slm_id, s.slm_name, s.slm_company_name
+ORDER BY purchase_count DESC, total_purchase_rm DESC;
+Reasoning:
+Purchase records link back to salesman or supplier master data.
+
+====== EXAMPLE 21: CUSTOMERS WITH COMPLETED SALES TOTALS ======
+User question:
+Which customers have the highest total sales value?
+SQL:
+SELECT
+    c.cust_id,
+    c.cust_name,
+    COUNT(s.sale_id) AS sale_count,
+    ROUND(COALESCE(SUM(s.sale_price), 0)::numeric, 2) AS total_sales_rm
+FROM konghin.customer c
+JOIN konghin.sale s
+    ON s.sale_cust_id = c.cust_id
+GROUP BY c.cust_id, c.cust_name
+ORDER BY total_sales_rm DESC, sale_count DESC;
+Reasoning:
+Aggregate sale header totals by customer to rank customer sales value.
+
+====== EXAMPLE 22: CUSTOMERS WITH ACTIVE BOOKINGS ======
+User question:
+Show customers who still have active bookings.
+SQL:
+SELECT
+    c.cust_id,
+    c.cust_name,
+    b.book_id,
+    b.book_date,
+    b.book_remaining,
+    b.book_status
+FROM konghin.customer c
+JOIN konghin.booking b
+    ON b.book_cust_id = c.cust_id
+WHERE b.book_status = 'BOOKED'
+ORDER BY b.book_date DESC NULLS LAST, b.book_id DESC;
+Reasoning:
+Join customer to booking and filter for currently active booking status.
+
+====== EXAMPLE 23: PATTERN MAPPINGS FOR A CATEGORY ======
+User question:
+Show all mapped ring patterns and image paths.
+SQL:
+SELECT
+    cpat_category,
+    cpat_pattern,
+    cpat_image_path
+FROM konghin.category_pattern_mapping
+WHERE UPPER(cpat_category) = 'RING'
+ORDER BY cpat_pattern;
+Reasoning:
+Pattern metadata lives in category_pattern_mapping, not in the stock table.
+
+====== EXAMPLE 24: LATEST SALES ======
+User question:
+Show the latest sales records.
+SQL:
+SELECT
+    sale_id,
+    sale_receipt_no,
+    sale_sold_date,
+    sale_price,
+    sale_cust_id
+FROM konghin.sale
+ORDER BY sale_created_at DESC NULLS LAST, sale_id DESC;
+Reasoning:
+Use the sale header and order by creation time for the latest records.

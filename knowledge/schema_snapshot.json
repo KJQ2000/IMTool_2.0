@@ -1,0 +1,1010 @@
+{
+  "schema": "konghin",
+  "tables": [
+    "book_payment",
+    "booking",
+    "category_pattern_mapping",
+    "customer",
+    "metadata",
+    "purchase",
+    "sale",
+    "salesman",
+    "stock",
+    "users"
+  ],
+  "row_counts": {
+    "book_payment": 42,
+    "booking": 26,
+    "category_pattern_mapping": 22,
+    "customer": 6,
+    "metadata": 10,
+    "purchase": 1033,
+    "sale": 19,
+    "salesman": 44,
+    "stock": 752,
+    "users": 1
+  },
+  "primary_keys": {
+    "book_payment": [
+      "bp_id"
+    ],
+    "booking": [
+      "book_id"
+    ],
+    "category_pattern_mapping": [
+      "cpat_id"
+    ],
+    "customer": [
+      "cust_id"
+    ],
+    "metadata": [
+      "metadata_key"
+    ],
+    "purchase": [
+      "pur_id"
+    ],
+    "sale": [
+      "sale_id"
+    ],
+    "salesman": [
+      "slm_id"
+    ],
+    "stock": [
+      "stk_id"
+    ],
+    "users": [
+      "usr_id"
+    ]
+  },
+  "columns": {
+    "book_payment": [
+      {
+        "column_name": "bp_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "bp_payment",
+        "ordinal_position": 2,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "bp_payment_date",
+        "ordinal_position": 3,
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "bp_book_id",
+        "ordinal_position": 4,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "bp_created_at",
+        "ordinal_position": 5,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "bp_status",
+        "ordinal_position": 6,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "bp_last_update",
+        "ordinal_position": 7,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "booking": [
+      {
+        "column_name": "book_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "book_gold_price",
+        "ordinal_position": 2,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_labor_price",
+        "ordinal_position": 3,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_price",
+        "ordinal_position": 4,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_remaining",
+        "ordinal_position": 5,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_date",
+        "ordinal_position": 6,
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_last_update",
+        "ordinal_position": 7,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "book_created_at",
+        "ordinal_position": 8,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "book_cust_id",
+        "ordinal_position": 9,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_weight",
+        "ordinal_position": 10,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_receipt_no",
+        "ordinal_position": 11,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "book_status",
+        "ordinal_position": 12,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "category_pattern_mapping": [
+      {
+        "column_name": "cpat_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "cpat_category",
+        "ordinal_position": 2,
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cpat_pattern",
+        "ordinal_position": 3,
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cpat_image_path",
+        "ordinal_position": 4,
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cpat_created_at",
+        "ordinal_position": 5,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "cpat_last_update",
+        "ordinal_position": 6,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ],
+    "customer": [
+      {
+        "column_name": "cust_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "cust_email_address",
+        "ordinal_position": 2,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cust_phone_number",
+        "ordinal_position": 3,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cust_address",
+        "ordinal_position": 4,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cust_last_update",
+        "ordinal_position": 5,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "cust_created_at",
+        "ordinal_position": 6,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "cust_buyer_id",
+        "ordinal_position": 7,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cust_sst_reg_no",
+        "ordinal_position": 8,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cust_tin",
+        "ordinal_position": 9,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "cust_name",
+        "ordinal_position": 10,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "metadata": [
+      {
+        "column_name": "metadata_key",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "metadata_value",
+        "ordinal_position": 2,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "purchase": [
+      {
+        "column_name": "pur_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_slm_id",
+        "ordinal_position": 2,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_gold_cost",
+        "ordinal_position": 3,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_labor_cost",
+        "ordinal_position": 4,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_method",
+        "ordinal_position": 5,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_official_invoice",
+        "ordinal_position": 6,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_date",
+        "ordinal_position": 7,
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_billing_date",
+        "ordinal_position": 8,
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_weight",
+        "ordinal_position": 9,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_invoice_no",
+        "ordinal_position": 10,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_last_update",
+        "ordinal_position": 11,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "pur_created_at",
+        "ordinal_position": 12,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "pur_total_trade_in_amt",
+        "ordinal_position": 13,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_total_cash_amt",
+        "ordinal_position": 14,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_total_amt",
+        "ordinal_position": 15,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_payment_status",
+        "ordinal_position": 16,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_code",
+        "ordinal_position": 17,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "pur_gold_cost_999",
+        "ordinal_position": 18,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "sale": [
+      {
+        "column_name": "sale_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_receipt_no",
+        "ordinal_position": 2,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_cust_id",
+        "ordinal_position": 3,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_sold_date",
+        "ordinal_position": 4,
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_labor_sell",
+        "ordinal_position": 5,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_gold_sell",
+        "ordinal_position": 6,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_price",
+        "ordinal_position": 7,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_last_update",
+        "ordinal_position": 8,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "sale_weight",
+        "ordinal_position": 9,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "sale_created_at",
+        "ordinal_position": 10,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "sale_official_receipt",
+        "ordinal_position": 11,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "salesman": [
+      {
+        "column_name": "slm_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_email_address",
+        "ordinal_position": 2,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_phone_number",
+        "ordinal_position": 3,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_company_name",
+        "ordinal_position": 4,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_last_update",
+        "ordinal_position": 5,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "slm_created_at",
+        "ordinal_position": 6,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "slm_supplier_id",
+        "ordinal_position": 7,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_tin",
+        "ordinal_position": 8,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_reg_no",
+        "ordinal_position": 9,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_msic",
+        "ordinal_position": 10,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_desc",
+        "ordinal_position": 11,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_address",
+        "ordinal_position": 12,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "slm_name",
+        "ordinal_position": 13,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "stock": [
+      {
+        "column_name": "stk_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_type",
+        "ordinal_position": 2,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_weight",
+        "ordinal_position": 3,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_size",
+        "ordinal_position": 4,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_length",
+        "ordinal_position": 5,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_labor_cost",
+        "ordinal_position": 6,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_labor_sell",
+        "ordinal_position": 7,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_pur_date",
+        "ordinal_position": 8,
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_sell_date",
+        "ordinal_position": 9,
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_gold_cost",
+        "ordinal_position": 10,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_gold_sell",
+        "ordinal_position": 11,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_status",
+        "ordinal_position": 12,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_profit",
+        "ordinal_position": 13,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_pattern",
+        "ordinal_position": 14,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_gold_type",
+        "ordinal_position": 15,
+        "data_type": "character",
+        "udt_name": "bpchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_last_update",
+        "ordinal_position": 16,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "stk_pur_id",
+        "ordinal_position": 17,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_created_at",
+        "ordinal_position": 18,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "stk_sale_id",
+        "ordinal_position": 19,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_book_id",
+        "ordinal_position": 20,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_returned",
+        "ordinal_position": 21,
+        "data_type": "character",
+        "udt_name": "bpchar",
+        "is_nullable": "YES",
+        "column_default": "'0'::bpchar"
+      },
+      {
+        "column_name": "stk_barcode",
+        "ordinal_position": 22,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": "'UNKNOWN'::character varying"
+      },
+      {
+        "column_name": "stk_remark",
+        "ordinal_position": 23,
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_tag",
+        "ordinal_position": 24,
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_weight_sell",
+        "ordinal_position": 25,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_weight_book",
+        "ordinal_position": 26,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_labor_book",
+        "ordinal_position": 27,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_gold_book",
+        "ordinal_position": 28,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_book_price",
+        "ordinal_position": 29,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "stk_printed",
+        "ordinal_position": 30,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": "0"
+      },
+      {
+        "column_name": "stk_width",
+        "ordinal_position": 31,
+        "data_type": "numeric",
+        "udt_name": "numeric",
+        "is_nullable": "YES",
+        "column_default": null
+      }
+    ],
+    "users": [
+      {
+        "column_name": "usr_id",
+        "ordinal_position": 1,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "column_name": "usr_email",
+        "ordinal_position": 2,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "usr_password",
+        "ordinal_position": 3,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "usr_username",
+        "ordinal_position": 4,
+        "data_type": "character varying",
+        "udt_name": "varchar",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "column_name": "usr_last_update",
+        "ordinal_position": 5,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
+        "column_name": "usr_created_at",
+        "ordinal_position": 6,
+        "data_type": "timestamp without time zone",
+        "udt_name": "timestamp",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      }
+    ]
+  },
+  "foreign_keys": []
+}
